@@ -165,11 +165,11 @@ void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Player& spot, cons
 	updateGameData(grid, spot, keyCode, mess);		//move spot in required direction
 	updateGrid(grid, maze, spot);					//update grid information
 }
-void movePlayer(Player & spot, int dy, int dx);
 void updateGameData(const char g[][SIZEX], Player& spot, const int key, string& mess)
 { //move spot in required direction
 	bool isArrowKey(const int k);
 	void setKeyDirection(int k, int& dx, int& dy);
+	void movePlayer(Player & spot, int dy, int dx);
 	assert (isArrowKey(key));
 
 	//reset message to blank
