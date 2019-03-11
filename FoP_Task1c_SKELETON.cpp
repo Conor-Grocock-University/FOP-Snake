@@ -23,6 +23,7 @@ using namespace std;
 #include "RandomUtils.h"    //for seed, random
 #include "ConsoleUtils.h"	//for clrscr, gotoxy, etc.
 #include "TimeUtils.h"		//for getSystemTime, timeToString, etc.
+#include "FoP_Task1c_SKELETON.h"
 
 //---------------------------------------------------------------------------
 //----- define constants
@@ -48,6 +49,16 @@ struct Item {
 	char symbol;
 };
 
+struct Player : Item {
+	int size;
+	Tail& tail;
+};
+
+struct Tail : Item {
+
+	Tail& next;
+};
+
 //---------------------------------------------------------------------------
 //----- run game
 //---------------------------------------------------------------------------
@@ -55,9 +66,9 @@ struct Item {
 int main()
 {
 	//function declarations (prototypes)
-	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Item& spot);
+	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot);
 	void renderGame(const char g[][SIZEX], const string& mess);
-	void updateGame(char g[][SIZEX], const char m[][SIZEX], Item& s, const int kc, string& mess);
+	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, const int kc, string& mess);
 	bool wantsToQuit(const int key);
 	bool isArrowKey(const int k);
 	int  getKeyPress();
@@ -66,7 +77,7 @@ int main()
 	//local variable declarations 
 	char grid[SIZEY][SIZEX];			//grid for display
 	char maze[SIZEY][SIZEX];			//structure of the maze
-	Item spot = { 0, 0, SPOT }; 		//spot's position and symbol
+	Player spot = { 0, 0, SPOT }; 		//spot's position and symbol
 	string message("LET'S START...");	//current message to player
 
 	//action...
@@ -93,18 +104,18 @@ int main()
 //----- initialise game state
 //---------------------------------------------------------------------------
 
-void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Item& spot)
+void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot)
 { //initialise grid and place spot in middle
 	void setInitialMazeStructure(char maze[][SIZEX]);
-	void setSpotInitialCoordinates(Item& spot);
-	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Item& i);
+	void setSpotInitialCoordinates(Player& spot);
+	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i);
 
 	setInitialMazeStructure(maze);		//initialise maze
 	setSpotInitialCoordinates(spot);
 	updateGrid(grid, maze, spot);		//prepare grid
 }
 
-void setSpotInitialCoordinates(Item& spot)
+void setSpotInitialCoordinates(Player& spot)
 { //set spot coordinates inside the grid at random at beginning of game
 //TODO: Ensure Spot does not spwan on inner walls
 	spot.y = random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
@@ -142,14 +153,14 @@ void setInitialMazeStructure(char maze[][SIZEX])
 //----- Update Game
 //---------------------------------------------------------------------------
 
-void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Item& spot, const int keyCode, string& mess)
+void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Player& spot, const int keyCode, string& mess)
 { //update game
-	void updateGameData(const char g[][SIZEX], Item& s, const int kc, string& m);
-	void updateGrid(char g[][SIZEX], const char maze[][SIZEX], const Item& s);
+	void updateGameData(const char g[][SIZEX], Player& s, const int kc, string& m);
+	void updateGrid(char g[][SIZEX], const char maze[][SIZEX], const Player& s);
 	updateGameData(grid, spot, keyCode, mess);		//move spot in required direction
 	updateGrid(grid, maze, spot);					//update grid information
 }
-void updateGameData(const char g[][SIZEX], Item& spot, const int key, string& mess)
+void updateGameData(const char g[][SIZEX], Player& spot, const int key, string& mess)
 { //move spot in required direction
 	bool isArrowKey(const int k);
 	void setKeyDirection(int k, int& dx, int& dy);
@@ -176,10 +187,10 @@ void updateGameData(const char g[][SIZEX], Item& spot, const int key, string& me
 		break;
 	}
 }
-void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Item& spot)
+void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot)
 { //update grid configuration after each move
 	void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
-	void placeItem(char g[][SIZEX], const Item& spot);
+	void placeItem(char g[][SIZEX], const Player& spot);
 
 	placeMaze(grid, maze);	//reset the empty maze configuration into grid
 	placeItem(grid, spot);	//set spot in grid
@@ -192,7 +203,7 @@ void placeMaze(char grid[][SIZEX], const char maze[][SIZEX])
 			grid[row][col] = maze[row][col];
 }
 
-void placeItem(char g[][SIZEX], const Item& item)
+void placeItem(char g[][SIZEX], const Player& item)
 { //place item at its new position in grid
 	g[item.y][item.x] = item.symbol;
 }
