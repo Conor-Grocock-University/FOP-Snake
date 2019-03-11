@@ -31,7 +31,7 @@ using namespace std;
 //---------------------------------------------------------------------------
 
 //defining the size of the grid
-const int  SIZEX(12);    	//horizontal dimension
+const int  SIZEX(15);    	//horizontal dimension
 const int  SIZEY(10);		//vertical dimension
 //defining symbols used for display of the grid and content
 const char SPOT('@');   	//spot
@@ -93,7 +93,7 @@ int main()
 	int key;							//current key selected by player
 	do {
 		renderGame(grid, message);			//display game info, modified grid and messages
-		//TODO: Ensure command letters are not  case sensitive
+		//TODO: Ensure command letters are not  case sensitive  // Q or q is only one??
 		key = getKeyPress(); 	//read in  selected key: arrow or letter command
 		if (isArrowKey(key))
 			updateGame(grid, maze, spot, key, message);
@@ -135,19 +135,18 @@ void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX])
 
 void setInitialMazeStructure(char maze[][SIZEX])
 { //set the position of the walls in the maze
-//TODO: Amend initial maze configuration (change size changed and inner walls)
   //initialise maze configuration
 	char initialMaze[SIZEY][SIZEX] 	//local array to store the maze structure
-		= { { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#' },
-		{ '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#' },
-		{ '#', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' } };
+		= { { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#','#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' } };
 	//with '#' for wall, ' ' for tunnel, etc. 
 	//copy into maze structure with appropriate symbols
 	for (int row(0); row < SIZEY; ++row)
