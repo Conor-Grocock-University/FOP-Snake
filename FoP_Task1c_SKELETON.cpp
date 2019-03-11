@@ -191,8 +191,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, const int key, string& 
 		movePlayer(spot, dy, dx);
 		break;
 	case WALL:  		//hit a wall and stay there
-//TODO: Remove alarm when bumping into walls - too annoying
-		cout << '\a';	//beep the alarm
+		//cout << '\a';	//beep the alarm
 		mess = "CANNOT GO THERE!";
 		break;
 	}
@@ -310,22 +309,18 @@ void renderGame(const char g[][SIZEX], const string& mess)
 	string tostring(int x);
 	void showMessage(const WORD backColour, const WORD textColour, int x, int y, const string& message);
 	void paintGrid(const char g[][SIZEX]);
-//TODO: Change the colour of the messages
 	//display game title
-	showMessage(clBlack, clYellow, 0, 0, "___GAME___");
+	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
 //TODO: Display date and time from the system
 	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - February 2019   ");
-//TODO: Show course SE/CS4G/CS, group number, students names and ids
-	showMessage(clWhite, clRed, 40, 1, "Pascale Vacher                ");
+	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b....)");
+	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
 	//display menu options available
-//TODO: Show other options availables when ready...
-	showMessage(clRed, clYellow, 40, 3, "TO MOVE - USE KEYBOARD ARROWS ");
-	showMessage(clRed, clYellow, 40, 4, "TO QUIT - ENTER 'Q'           ");
+	showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
+	showMessage(clRed, clYellow, 40, 5, "TO QUIT - PRESS 'Q'           ");
 
 	//print auxiliary messages if any
-	showMessage(clBlack, clWhite, 40, 8, mess);	//display current message
-
-//TODO: Show your course, your group number and names on screen
+	showMessage(clBlack, clWhite, 40, 9, mess);	//display current message
 
 	//display grid contents
 	paintGrid(g);
@@ -336,11 +331,16 @@ void paintGrid(const char g[][SIZEX])
 	selectBackColour(clBlack);
 	selectTextColour(clWhite);
 	gotoxy(0, 2);
-//TODO: Give a diferent colour to the symbol representing Spot
 	for (int row(0); row < SIZEY; ++row)
 	{
-		for (int col(0); col < SIZEX; ++col)
-			cout << g[row][col];	//output cell content
+		for (int col(0); col < SIZEX; ++col) {
+			char cell = g[row][col];
+			if (cell == '@') //check for snake
+				selectTextColour(clGreen); //if rendering the snake make it green
+			else
+				selectTextColour(clWhite); //any other cell is white
+			cout << cell; //output cell content
+		}
 		cout << endl;
 	}
 }
