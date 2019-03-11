@@ -1,2 +1,4 @@
 ﻿  FoP_Task1c_SKELETON.cpp
+c:\users\rae\documents\github\fop-snake\fop_task1c_skeleton.cpp(316): warning C4996: 'ctime': This function or variable may be unsafe. Consider using ctime_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  c:\program files (x86)\windows kits\10\include\10.0.17763.0\ucrt\time.h(476): note: see declaration of 'ctime'
   FoP_Task1c_Project.vcxproj -> C:\Users\Rae\Documents\GitHub\FOP-Snake\x64\Debug\FoP_Task1c_Project.exe

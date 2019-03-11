@@ -311,8 +311,9 @@ void renderGame(const char g[][SIZEX], const string& mess)
 	void paintGrid(const char g[][SIZEX]);
 	//display game title
 	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
-//TODO: Display date and time from the system
-	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - February 2019   ");
+	time_t now = time(0);
+	string dt = ctime(&now);
+	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - "+dt);
 	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b....)");
 	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
 	//display menu options available
@@ -348,7 +349,6 @@ void paintGrid(const char g[][SIZEX])
 void endProgram()
 {
 	void showMessage(const WORD backColour, const WORD textColour, int x, int y, const string& message);
-//TODO: Display a message when user chooses to quit
-	showMessage(clRed, clYellow, 40, 8, "");	
-	system("pause");	//hold output screen until a keyboard key is hit
+	showMessage(clRed, clYellow, 40, 8, "Goodbye!");	
+	//system("pause");	//hold output screen until a keyboard key is hit
 }
