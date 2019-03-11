@@ -17,6 +17,7 @@
 #include <cassert> 
 #include <string>
 #include <sstream>
+#include <vector>
 using namespace std;
 
 //include our own libraries
@@ -50,13 +51,17 @@ struct Item {
 };
 
 struct Player : Item {
-	int size;
-	Tail& tail;
-};
+	vector<Item> tails;
+	int maxSize;
 
-struct Tail : Item {
+	Player(int _x, int _y, char _symbol) {
+		x = _x;
+		y = _y;
+		symbol = _symbol;
+		maxSize = 4;
+	}
 
-	Tail& next;
+
 };
 
 //---------------------------------------------------------------------------
@@ -75,10 +80,10 @@ int main()
 	void endProgram();
 
 	//local variable declarations 
-	char grid[SIZEY][SIZEX];			//grid for display
-	char maze[SIZEY][SIZEX];			//structure of the maze
-	Player spot = { 0, 0, SPOT }; 		//spot's position and symbol
-	string message("LET'S START...");	//current message to player
+	char grid[SIZEY][SIZEX];					//grid for display
+	char maze[SIZEY][SIZEX];					//structure of the maze
+	Player spot = { 0, 0, SPOT };			 	//spot's position and symbol
+	string message("LET'S START...");			//current message to player
 
 	//action...
 	seed();								//seed the random number generator
@@ -160,6 +165,7 @@ void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Player& spot, cons
 	updateGameData(grid, spot, keyCode, mess);		//move spot in required direction
 	updateGrid(grid, maze, spot);					//update grid information
 }
+void movePlayer(Player & spot, int dy, int dx);
 void updateGameData(const char g[][SIZEX], Player& spot, const int key, string& mess)
 { //move spot in required direction
 	bool isArrowKey(const int k);
@@ -177,8 +183,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, const int key, string& 
 	switch (g[spot.y + dy][spot.x + dx])
 	{			//...depending on what's on the target position in grid...
 	case TUNNEL:		//can move
-		spot.y += dy;	//go in that Y direction
-		spot.x += dx;	//go in that X direction
+		movePlayer(spot, dy, dx);
 		break;
 	case WALL:  		//hit a wall and stay there
 //TODO: Remove alarm when bumping into walls - too annoying
@@ -187,6 +192,18 @@ void updateGameData(const char g[][SIZEX], Player& spot, const int key, string& 
 		break;
 	}
 }
+
+void movePlayer(Player & spot, int dy, int dx)
+{
+	while (spot.tails.size() > spot.maxSize) {
+		spot.tails.erase(spot.tails.begin());
+	}
+	spot.tails.push_back({ spot.x, spot.y, SPOT });
+	spot.y += dy;	//go in that Y direction
+	spot.x += dx;	//go in that X direction
+}
+
+
 void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot)
 { //update grid configuration after each move
 	void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
@@ -203,9 +220,14 @@ void placeMaze(char grid[][SIZEX], const char maze[][SIZEX])
 			grid[row][col] = maze[row][col];
 }
 
-void placeItem(char g[][SIZEX], const Player& item)
+void placeItem(char g[][SIZEX], const Player& player)
 { //place item at its new position in grid
-	g[item.y][item.x] = item.symbol;
+	g[player.y][player.x] = player.symbol;
+
+	for each (Item tail in player.tails)
+	{
+		g[tail.y][tail.x] = tail.symbol;
+	}
 }
 //---------------------------------------------------------------------------
 //----- process key
