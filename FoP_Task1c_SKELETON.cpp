@@ -24,7 +24,7 @@ using namespace std;
 #include "RandomUtils.h"    //for seed, random
 #include "ConsoleUtils.h"	//for clrscr, gotoxy, etc.
 #include "TimeUtils.h"		//for getSystemTime, timeToString, etc.
-#include "FoP_Task1c_SKELETON.h"
+//#include "FoP_Task1c_SKELETON.h"
 
 //---------------------------------------------------------------------------
 //----- define constants
@@ -44,6 +44,7 @@ const int  RIGHT(77);		//right arrow
 const int  LEFT(75);		//left arrow
 //defining the other command letters
 const char QUIT('Q');		//to end the game
+const char QUITLOWER('q'); //to end the game with lowercase q
 
 struct Item {
 	int x, y;
@@ -112,19 +113,24 @@ int main()
 void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot)
 { //initialise grid and place spot in middle
 	void setInitialMazeStructure(char maze[][SIZEX]);
-	void setSpotInitialCoordinates(Player& spot);
+	void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX]);
 	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i);
 
 	setInitialMazeStructure(maze);		//initialise maze
-	setSpotInitialCoordinates(spot);
+	setSpotInitialCoordinates(spot,maze);
 	updateGrid(grid, maze, spot);		//prepare grid
 }
 
-void setSpotInitialCoordinates(Player& spot)
+void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX])
 { //set spot coordinates inside the grid at random at beginning of game
-//TODO: Ensure Spot does not spwan on inner walls
-	spot.y = random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
-	spot.x = random(SIZEX - 2);      //horizontal coordinate in range [1..(SIZEX - 2)]
+	bool validspawn=false;
+	while (!validspawn) {
+		spot.y = random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
+		spot.x = random(SIZEX - 2);      //horizontal coordinate in range [1..(SIZEX - 2)]
+		if (maze[spot.y][spot.x] != '#') {
+			validspawn = true;
+		}
+	}
 } 
 
 void setInitialMazeStructure(char maze[][SIZEX])
@@ -269,13 +275,11 @@ int getKeyPress()
 
 bool isArrowKey(const int key)
 {	//check if the key pressed is an arrow key (also accept 'K', 'M', 'H' and 'P')
-//TODO: Detect UP and DOWN arrow keys as well
 	return (key == LEFT) || (key == RIGHT) || (key == UP) || (key == DOWN);
 }
 bool wantsToQuit(const int key)
 {	//check if the user wants to quit (when key is 'Q' or 'q')
-//TODO: Ensure both 'Q' and 'q' are detected
-	return key == QUIT;
+	return key == QUIT || key==QUITLOWER;
 }
 
 //---------------------------------------------------------------------------
