@@ -48,6 +48,8 @@ const int  LEFT(75);		//left arrow
 const char QUIT('Q');		//to end the game
 const char QUITLOWER('q'); //to end the game with lowercase q
 
+#pragma region Structs
+
 struct Item {
 	int x, y;
 	char symbol;
@@ -84,6 +86,8 @@ struct Mouse : Item {
 struct Position {
 	int x, y;
 };
+
+#pragma endregion
 
 //---------------------------------------------------------------------------
 //----- run game
@@ -221,6 +225,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int
 	case MOUSE:
 		spot.maxSize += 2;
 		setRandomItemPosition(g, mouse);
+		movePlayer(spot, dy, dx);
 		break;
 	}
 }
@@ -266,7 +271,6 @@ void movePlayer(Player & spot, int dy, int dx)
 	spot.x += dx;	//go in that X direction
 }
 
-
 void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot, const Mouse& mouse)
 { //update grid configuration after each move
 	void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
@@ -298,9 +302,11 @@ void placeItem(char g[][SIZEX], const Item& player)
 { //place item at its new position in grid
 	g[player.y][player.x] = player.symbol;
 }
+
 //---------------------------------------------------------------------------
 //----- process key
 //---------------------------------------------------------------------------
+
 void setKeyDirection(const int key, int& dx, int& dy)
 { //calculate direction indicated by key
 	bool isArrowKey(const int k);
