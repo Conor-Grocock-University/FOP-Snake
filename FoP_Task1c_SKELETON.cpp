@@ -375,7 +375,7 @@ void renderGame(const char g[][SIZEX], const string& mess)
 	time_t now = time(0);
 	string dt = ctime(&now);
 	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - "+dt);
-	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b....)");
+	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b8022088)");
 	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
 	//display menu options available
 	showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
