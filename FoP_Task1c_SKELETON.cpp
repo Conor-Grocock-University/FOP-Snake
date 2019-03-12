@@ -135,11 +135,12 @@ int main()
 void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot, Mouse& mouse)
 { //initialise grid and place spot in middle
 	void setInitialMazeStructure(char maze[][SIZEX]);
-	void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX]);
+	void setRandomItemPosition(const char g[][SIZEX], Item& item);
 	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& n);
 
 	setInitialMazeStructure(maze);		//initialise maze
-	setSpotInitialCoordinates(spot,maze);
+	setRandomItemPosition(maze, spot);
+	setRandomItemPosition(maze, mouse);
 	updateGrid(grid, maze, spot, mouse);		//prepare grid
 }
 
@@ -197,7 +198,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int
 	bool isArrowKey(const int k);
 	void setKeyDirection(int k, int& dx, int& dy);
 	void movePlayer(Player& spot, int dy, int dx);
-	void randomMouse(const char grid[][SIZEX], const Player& player, Mouse& mouse);
+	void setRandomItemPosition(const char g[][SIZEX], Item& item);
 	assert (isArrowKey(key));
 
 	//reset message to blank
@@ -219,17 +220,17 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int
 		break;
 	case MOUSE:
 		spot.maxSize += 2;
-		randomMouse(g, spot, mouse);
+		setRandomItemPosition(g, mouse);
 		break;
 	}
 }
 
-void randomMouse(const char grid[][SIZEX], const Player& player, Mouse& mouse) {
+void setRandomItemPosition(const char grid[][SIZEX], Item& item) {
 	Position getRandomPosition(const char g[][SIZEX]);
 
-	Position mousePosition = getRandomPosition(grid);
-	mouse.x = mousePosition.x;
-	mouse.y = mousePosition.y;
+	Position itemPosition = getRandomPosition(grid);
+	item.x = itemPosition.x;
+	item.y = itemPosition.y;
 }
 
 Position getRandomPosition(const char grid[][SIZEX]) {
