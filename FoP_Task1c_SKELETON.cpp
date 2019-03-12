@@ -24,14 +24,14 @@ using namespace std;
 #include "RandomUtils.h"    //for seed, random
 #include "ConsoleUtils.h"	//for clrscr, gotoxy, etc.
 #include "TimeUtils.h"		//for getSystemTime, timeToString, etc.
-#include "FoP_Task1c_SKELETON.h"
+//#include "FoP_Task1c_SKELETON.h"
 
 //---------------------------------------------------------------------------
 //----- define constants
 //---------------------------------------------------------------------------
 
 //defining the size of the grid
-const int  SIZEX(12);    	//horizontal dimension
+const int  SIZEX(15);    	//horizontal dimension
 const int  SIZEY(10);		//vertical dimension
 //defining symbols used for display of the grid and content
 const char SPOT('@');   	//spot
@@ -46,6 +46,7 @@ const int  RIGHT(77);		//right arrow
 const int  LEFT(75);		//left arrow
 //defining the other command letters
 const char QUIT('Q');		//to end the game
+const char QUITLOWER('q'); //to end the game with lowercase q
 
 struct Item {
 	int x, y;
@@ -109,7 +110,7 @@ int main()
 	int key;							//current key selected by player
 	do {
 		renderGame(grid, message);			//display game info, modified grid and messages
-		//TODO: Ensure command letters are not  case sensitive
+		//TODO: Ensure command letters are not  case sensitive  // Q or q is only one??
 		key = getKeyPress(); 	//read in  selected key: arrow or letter command
 		if (isArrowKey(key))
 			updateGame(grid, maze, spot, mouse, key, message);
@@ -130,36 +131,55 @@ int main()
 void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot, Mouse& mouse)
 { //initialise grid and place spot in middle
 	void setInitialMazeStructure(char maze[][SIZEX]);
+<<<<<<< HEAD
 	void setSpotInitialCoordinates(Player& spot);
 	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& mouse);
 
 	setInitialMazeStructure(maze);		//initialise maze
 	setSpotInitialCoordinates(spot);
 	updateGrid(grid, maze, spot, mouse);		//prepare grid
+=======
+	void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX]);
+	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i);
+
+	setInitialMazeStructure(maze);		//initialise maze
+	setSpotInitialCoordinates(spot,maze);
+	updateGrid(grid, maze, spot);		//prepare grid
+>>>>>>> 193c1393bdd3849b2ffae38c86946aa9e91a2ae0
 }
 
-void setSpotInitialCoordinates(Player& spot)
+void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX])
 { //set spot coordinates inside the grid at random at beginning of game
+<<<<<<< HEAD
 //TODO: Ensure Spot does not spwan on inner walls
 	spot.y = (SIZEY / 2); //random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
 	spot.x = (SIZEX / 2); //random(SIZEX - 2);      //horizontal coordinate in range [1..(SIZEX - 2)]
+=======
+	bool validspawn=false;
+	while (!validspawn) {
+		spot.y = random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
+		spot.x = random(SIZEX - 2);      //horizontal coordinate in range [1..(SIZEX - 2)]
+		if (maze[spot.y][spot.x] != '#') {
+			validspawn = true;
+		}
+	}
+>>>>>>> 193c1393bdd3849b2ffae38c86946aa9e91a2ae0
 } 
 
 void setInitialMazeStructure(char maze[][SIZEX])
 { //set the position of the walls in the maze
-//TODO: Amend initial maze configuration (change size changed and inner walls)
   //initialise maze configuration
 	char initialMaze[SIZEY][SIZEX] 	//local array to store the maze structure
-		= { { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', '#' },
-		{ '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', '#' },
-		{ '#', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#' },
-		{ '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' } };
+		= { { '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#','#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',' ', ' ', ' ', '#' },
+		{ '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#' } };
 	//with '#' for wall, ' ' for tunnel, etc. 
 	//copy into maze structure with appropriate symbols
 	for (int row(0); row < SIZEY; ++row)
@@ -206,8 +226,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int
 		movePlayer(spot, dy, dx);
 		break;
 	case WALL:  		//hit a wall and stay there
-//TODO: Remove alarm when bumping into walls - too annoying
-		cout << '\a';	//beep the alarm
+		//cout << '\a';	//beep the alarm
 		mess = "CANNOT GO THERE!";
 		break;
 	case MOUSE:
@@ -315,13 +334,11 @@ int getKeyPress()
 
 bool isArrowKey(const int key)
 {	//check if the key pressed is an arrow key (also accept 'K', 'M', 'H' and 'P')
-//TODO: Detect UP and DOWN arrow keys as well
 	return (key == LEFT) || (key == RIGHT) || (key == UP) || (key == DOWN);
 }
 bool wantsToQuit(const int key)
 {	//check if the user wants to quit (when key is 'Q' or 'q')
-//TODO: Ensure both 'Q' and 'q' are detected
-	return key == QUIT;
+	return key == QUIT || key==QUITLOWER;
 }
 
 //---------------------------------------------------------------------------
@@ -353,22 +370,19 @@ void renderGame(const char g[][SIZEX], const string& mess)
 	string tostring(int x);
 	void showMessage(const WORD backColour, const WORD textColour, int x, int y, const string& message);
 	void paintGrid(const char g[][SIZEX]);
-//TODO: Change the colour of the messages
 	//display game title
-	showMessage(clBlack, clYellow, 0, 0, "___GAME___");
-//TODO: Display date and time from the system
-	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - February 2019   ");
-//TODO: Show course SE/CS4G/CS, group number, students names and ids
-	showMessage(clWhite, clRed, 40, 1, "Pascale Vacher                ");
+	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
+	time_t now = time(0);
+	string dt = ctime(&now);
+	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - "+dt);
+	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b....)");
+	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
 	//display menu options available
-//TODO: Show other options availables when ready...
-	showMessage(clRed, clYellow, 40, 3, "TO MOVE - USE KEYBOARD ARROWS ");
-	showMessage(clRed, clYellow, 40, 4, "TO QUIT - ENTER 'Q'           ");
+	showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
+	showMessage(clRed, clYellow, 40, 5, "TO QUIT - PRESS 'Q'           ");
 
 	//print auxiliary messages if any
-	showMessage(clBlack, clWhite, 40, 8, mess);	//display current message
-
-//TODO: Show your course, your group number and names on screen
+	showMessage(clBlack, clWhite, 40, 9, mess);	//display current message
 
 	//display grid contents
 	paintGrid(g);
@@ -379,11 +393,16 @@ void paintGrid(const char g[][SIZEX])
 	selectBackColour(clBlack);
 	selectTextColour(clWhite);
 	gotoxy(0, 2);
-//TODO: Give a diferent colour to the symbol representing Spot
 	for (int row(0); row < SIZEY; ++row)
 	{
-		for (int col(0); col < SIZEX; ++col)
-			cout << g[row][col];	//output cell content
+		for (int col(0); col < SIZEX; ++col) {
+			char cell = g[row][col];
+			if (cell == '@') //check for snake
+				selectTextColour(clGreen); //if rendering the snake make it green
+			else
+				selectTextColour(clWhite); //any other cell is white
+			cout << cell; //output cell content
+		}
 		cout << endl;
 	}
 }
@@ -391,7 +410,6 @@ void paintGrid(const char g[][SIZEX])
 void endProgram()
 {
 	void showMessage(const WORD backColour, const WORD textColour, int x, int y, const string& message);
-//TODO: Display a message when user chooses to quit
-	showMessage(clRed, clYellow, 40, 8, "");	
-	system("pause");	//hold output screen until a keyboard key is hit
+	showMessage(clRed, clYellow, 40, 8, "Goodbye!");	
+	//system("pause");	//hold output screen until a keyboard key is hit
 }
