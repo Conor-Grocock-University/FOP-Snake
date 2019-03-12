@@ -81,6 +81,10 @@ struct Mouse : Item {
 	}
 };
 
+struct Position {
+	int x, y;
+};
+
 //---------------------------------------------------------------------------
 //----- run game
 //---------------------------------------------------------------------------
@@ -131,39 +135,23 @@ int main()
 void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot, Mouse& mouse)
 { //initialise grid and place spot in middle
 	void setInitialMazeStructure(char maze[][SIZEX]);
-<<<<<<< HEAD
-	void setSpotInitialCoordinates(Player& spot);
-	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& mouse);
-
-	setInitialMazeStructure(maze);		//initialise maze
-	setSpotInitialCoordinates(spot);
-	updateGrid(grid, maze, spot, mouse);		//prepare grid
-=======
 	void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX]);
-	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i);
+	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& n);
 
 	setInitialMazeStructure(maze);		//initialise maze
 	setSpotInitialCoordinates(spot,maze);
-	updateGrid(grid, maze, spot);		//prepare grid
->>>>>>> 193c1393bdd3849b2ffae38c86946aa9e91a2ae0
+	updateGrid(grid, maze, spot, mouse);		//prepare grid
 }
 
 void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX])
 { //set spot coordinates inside the grid at random at beginning of game
-<<<<<<< HEAD
-//TODO: Ensure Spot does not spwan on inner walls
-	spot.y = (SIZEY / 2); //random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
-	spot.x = (SIZEX / 2); //random(SIZEX - 2);      //horizontal coordinate in range [1..(SIZEX - 2)]
-=======
-	bool validspawn=false;
-	while (!validspawn) {
-		spot.y = random(SIZEY - 2);      //vertical coordinate in range [1..(SIZEY - 2)]
-		spot.x = random(SIZEX - 2);      //horizontal coordinate in range [1..(SIZEX - 2)]
-		if (maze[spot.y][spot.x] != '#') {
-			validspawn = true;
-		}
-	}
->>>>>>> 193c1393bdd3849b2ffae38c86946aa9e91a2ae0
+
+	Position getRandomPosition(const char g[][SIZEX]);
+
+	Position playerPosition = getRandomPosition(maze);
+	spot.x = playerPosition.x;
+	spot.y = playerPosition.y;
+
 } 
 
 void setInitialMazeStructure(char maze[][SIZEX])
@@ -237,19 +225,34 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int
 }
 
 void randomMouse(const char grid[][SIZEX], const Player& player, Mouse& mouse) {
-	int x, y;
-	bool validPosition = false;
+	Position getRandomPosition(const char g[][SIZEX]);
 
-	while (!validPosition) {
+	Position mousePosition = getRandomPosition(grid);
+	mouse.x = mousePosition.x;
+	mouse.y = mousePosition.y;
+}
+
+Position getRandomPosition(const char grid[][SIZEX]) {
+	bool validPosition(const char grid[][SIZEX], int x, int y);
+
+	int x, y;
+	bool positionEmpty = false;
+
+	while (!positionEmpty) {
 		x = random(SIZEX - 1);
 		y = random(SIZEX - 1);
-
-		if (grid[y][x] == TUNNEL)
-			validPosition = true;
+		positionEmpty = validPosition(grid, x, y);
 	}
 
-	mouse.x = x;
-	mouse.y = y;
+	return { x, y };
+}
+
+bool validPosition(const char grid[][SIZEX], int x, int y) {
+
+	bool validPosition = false;
+	if (grid[y][x] == TUNNEL)
+		validPosition = true;
+	return validPosition;
 }
 
 void movePlayer(Player & spot, int dy, int dx)
