@@ -46,7 +46,6 @@ const int  RIGHT(77);		//right arrow
 const int  LEFT(75);		//left arrow
 //defining the other command letters
 const char QUIT('Q');		//to end the game
-const char QUITLOWER('q'); //to end the game with lowercase q
 
 #pragma region Structs
 
@@ -118,16 +117,15 @@ int main()
 	int key;							//current key selected by player
 	do {
 		renderGame(grid, message);			//display game info, modified grid and messages
-		//TODO: Ensure command letters are not  case sensitive  // Q or q is only one??
 		key = getKeyPress(); 	//read in  selected key: arrow or letter command
 		if (isArrowKey(key))
 			updateGame(grid, maze, spot, mouse, key, message);
-
+		else if (wantsToQuit(key))      //if the key is a quit key
+			endProgram();               //end the game
 		else
 			message = "INVALID KEY!";  //set 'Invalid key' message
 	} while (!wantsToQuit(key));		//while user does not want to quit
 	renderGame(grid, message);			//display game info, modified grid and messages
-	endProgram();						//display final message
 	return 0;
 }
 
@@ -348,7 +346,7 @@ bool isArrowKey(const int key)
 }
 bool wantsToQuit(const int key)
 {	//check if the user wants to quit (when key is 'Q' or 'q')
-	return key == QUIT || key==QUITLOWER;
+	return key == QUIT || key==tolower(QUIT);
 }
 
 //---------------------------------------------------------------------------
