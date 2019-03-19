@@ -39,6 +39,7 @@ const char TAIL('+');   	//spot
 const char TUNNEL(' ');    	//tunnel
 const char WALL('#');    	//border
 const char MOUSE('M');    	//mouse
+const char PILL('o');       //power up pill
 //defining the command letters to move the spot on the maze
 const int  UP(72);			//up arrow
 const int  DOWN(80); 		//down arrow
@@ -64,13 +65,14 @@ struct Tail : Item {
 
 struct Player : Item {
 	vector<Tail> tails;
-	int maxSize;
+	int maxSize,mouseCount;
 
 	Player(int _x, int _y) {
 		x = _x;
 		y = _y;
 		symbol = SPOT;
 		maxSize = 4;
+		mouseCount = 0;
 	}
 };
 
@@ -79,6 +81,16 @@ struct Mouse : Item {
 		x = _x;
 		y = _y;
 		symbol = MOUSE;
+	}
+};
+
+struct Pill : Item {
+	bool show;
+	Pill(int _x, int _y) {
+		x = _x;
+		y = _y;
+		symbol = PILL;
+		show = false;
 	}
 };
 
@@ -95,9 +107,9 @@ struct Position {
 int main()
 {
 	//function declarations (prototypes)
-	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse);
-	void renderGame(const char g[][SIZEX], const string& mess);
-	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, const int kc, string& mess);
+	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
+	void renderGame(const char g[][SIZEX], const string& mess, const Pill& pill);
+	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, const int kc, string& mess);
 	bool wantsToQuit(const int key);
 	bool isArrowKey(const int k);
 	int  getKeyPress();
@@ -106,26 +118,27 @@ int main()
 	//local variable declarations 
 	char grid[SIZEY][SIZEX];			//grid for display
 	char maze[SIZEY][SIZEX];			//structure of the maze
-	Player spot = { 0, 0 };			 	//spot's position and symbol
-	Mouse mouse = { 3, 3 };
+	Player spot = { 0, 0 };			 	//spot's position
+	Mouse mouse = { 3, 3 };             //mouse's position
+	Pill pill = { 0,0 };                //power up pill's position
 	string message("LET'S START...");	//current message to player
 
 	//action...
 	seed();								//seed the random number generator
 	SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
-	initialiseGame(grid, maze, spot, mouse);	//initialise grid (incl. walls and spot)
+	initialiseGame(grid, maze, spot, mouse, pill);	//initialise grid (incl. walls and spot)
 	int key;							//current key selected by player
 	do {
-		renderGame(grid, message);			//display game info, modified grid and messages
+		renderGame(grid, message, pill);			//display game info, modified grid and messages
 		key = getKeyPress(); 	//read in  selected key: arrow or letter command
 		if (isArrowKey(key))
-			updateGame(grid, maze, spot, mouse, key, message);
+			updateGame(grid, maze, spot, mouse, pill, key, message);
 		else if (wantsToQuit(key))      //if the key is a quit key
 			endProgram();               //end the game
 		else
 			message = "INVALID KEY!";  //set 'Invalid key' message
 	} while (!wantsToQuit(key));		//while user does not want to quit
-	renderGame(grid, message);			//display game info, modified grid and messages
+	renderGame(grid, message, pill);			//display game info, modified grid and messages
 	return 0;
 }
 
@@ -134,16 +147,16 @@ int main()
 //----- initialise game state
 //---------------------------------------------------------------------------
 
-void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot, Mouse& mouse)
+void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot, Mouse& mouse, Pill& pill)
 { //initialise grid and place spot in middle
 	void setInitialMazeStructure(char maze[][SIZEX]);
 	void setRandomItemPosition(const char g[][SIZEX], Item& item);
-	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& n);
+	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& n, const Pill& p);
 
 	setInitialMazeStructure(maze);		//initialise maze
 	setRandomItemPosition(maze, spot);
 	setRandomItemPosition(maze, mouse);
-	updateGrid(grid, maze, spot, mouse);		//prepare grid
+	updateGrid(grid, maze, spot, mouse, pill);		//prepare grid
 }
 
 void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX])
@@ -187,15 +200,15 @@ void setInitialMazeStructure(char maze[][SIZEX])
 //----- Update Game
 //---------------------------------------------------------------------------
 
-void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Player& spot, Mouse& mouse, const int keyCode, string& mess)
+void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int keyCode, string& mess)
 { //update game
-	void updateGameData(const char g[][SIZEX], Player& s, Mouse& mo, const int kc, string& ms);
-	void updateGrid(char g[][SIZEX], const char maze[][SIZEX], const Player& s, const Mouse& mouse);
-	updateGameData(grid, spot, mouse, keyCode, mess);		//move spot in required direction
-	updateGrid(grid, maze, spot, mouse);					//update grid information
+	void updateGameData(const char g[][SIZEX], Player& s, Mouse& mo, Pill& p, const int kc, string& ms);
+	void updateGrid(char g[][SIZEX], const char maze[][SIZEX], const Player& s, const Mouse& mouse, const Pill& pup);
+	updateGameData(grid, spot, mouse, pill, keyCode, mess);		//move spot in required direction
+	updateGrid(grid, maze, spot, mouse, pill);					//update grid information
 }
 
-void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int key, string& mess)
+void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int key, string& mess)
 { //move spot in required direction
 	bool isArrowKey(const int k);
 	void setKeyDirection(int k, int& dx, int& dy);
@@ -222,7 +235,24 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, const int
 		break;
 	case MOUSE:
 		spot.maxSize += 2;
+		spot.mouseCount++;
 		setRandomItemPosition(g, mouse);
+		setRandomItemPosition(g, pill);
+		movePlayer(spot, dy, dx);
+
+		// every two mice caught, a power up pill spawns (check for that)
+		if (spot.mouseCount == 2) {
+			spot.mouseCount = 0;
+			setRandomItemPosition(g, pill);
+			pill.show = true;
+		}
+		else
+			pill.show = false;
+		break;
+	case PILL:
+		spot.maxSize = 4;
+		spot.mouseCount = 0;
+		pill.show = false;
 		movePlayer(spot, dy, dx);
 		break;
 	}
@@ -267,7 +297,7 @@ void movePlayer(Player & spot, int dy, int dx)
 	spot.x += dx;	//go in that X direction
 }
 
-void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot, const Mouse& mouse)
+void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot, const Mouse& mouse, const Pill& pill)
 { //update grid configuration after each move
 	void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
 	void placeItem(char g[][SIZEX], const Item& item);
@@ -275,6 +305,7 @@ void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot
 
 	placeMaze(grid, maze);	//reset the empty maze configuration into grid
 	placeItem(grid, mouse);
+	placeItem(grid, pill);
 	placePlayer(grid, spot);	//set spot in grid
 }
 
@@ -294,9 +325,9 @@ void placePlayer(char g[][SIZEX], const Player& player) {
 	}
 }
 
-void placeItem(char g[][SIZEX], const Item& player)
+void placeItem(char g[][SIZEX], const Item& item)
 { //place item at its new position in grid
-	g[player.y][player.x] = player.symbol;
+	g[item.y][item.x] = item.symbol;
 }
 
 //---------------------------------------------------------------------------
@@ -370,17 +401,15 @@ void showMessage(const WORD backColour, const WORD textColour, int x, int y, con
 	selectTextColour(textColour);
 	cout << message + string(40 - message.length(), ' ');
 }
-void renderGame(const char g[][SIZEX], const string& mess)
+void renderGame(const char g[][SIZEX], const string& mess, const Pill& pill)
 { //display game title, messages, maze, spot and other items on screen
 	string tostring(char x);
 	string tostring(int x);
 	void showMessage(const WORD backColour, const WORD textColour, int x, int y, const string& message);
-	void paintGrid(const char g[][SIZEX]);
+	void paintGrid(const char g[][SIZEX],const Pill& pup);
 	//display game title
 	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
-	time_t now = time(0);
-	string dt = ctime(&now);
-	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - "+dt);
+	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - "+getTime());
 	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b8022088)");
 	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
 	//display menu options available
@@ -391,10 +420,10 @@ void renderGame(const char g[][SIZEX], const string& mess)
 	showMessage(clBlack, clWhite, 40, 9, mess);	//display current message
 
 	//display grid contents
-	paintGrid(g);
+	paintGrid(g,pill);
 }
 
-void paintGrid(const char g[][SIZEX])
+void paintGrid(const char g[][SIZEX],const Pill& pill)
 { //display grid content on screen
 	selectBackColour(clBlack);
 	selectTextColour(clWhite);
@@ -403,11 +432,21 @@ void paintGrid(const char g[][SIZEX])
 	{
 		for (int col(0); col < SIZEX; ++col) {
 			char cell = g[row][col];
-			if (cell == '@') //check for snake
+			if (cell == SPOT) //check for snake
 				selectTextColour(clGreen); //if rendering the snake make it green
+			else if (cell == TAIL)
+				selectTextColour(clYellow);
+			else if (cell == PILL)
+				selectTextColour(clRed);
+			else if (cell == WALL)
+				selectTextColour(clGrey);
 			else
 				selectTextColour(clWhite); //any other cell is white
-			cout << cell; //output cell content
+
+			if (cell == PILL && pill.show == false)
+				cout << TUNNEL;
+			else
+				cout << cell; //output cell content
 		}
 		cout << endl;
 	}
