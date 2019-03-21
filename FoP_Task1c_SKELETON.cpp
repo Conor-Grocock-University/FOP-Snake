@@ -127,16 +127,23 @@ int main()
 	seed();								//seed the random number generator
 	SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
 	initialiseGame(grid, maze, spot, mouse, pill);	//initialise grid (incl. walls and spot)
-	int key;							//current key selected by player
+	int key = UP;							//current key selected by player
 	do {
 		renderGame(grid, message, pill);			//display game info, modified grid and messages
-		key = getKeyPress(); 	//read in  selected key: arrow or letter command
+
+		Sleep(100);
+		if (kbhit()) {
+			int newKey = getKeyPress(); 	//read in  selected key: arrow or letter command
+			if (newKey) key = newKey;
+		}
+
 		if (isArrowKey(key))
 			updateGame(grid, maze, spot, mouse, pill, key, message);
 		else if (wantsToQuit(key))      //if the key is a quit key
 			endProgram();               //end the game
 		else
 			message = "INVALID KEY!";  //set 'Invalid key' message
+
 	} while (!wantsToQuit(key));		//while user does not want to quit
 	renderGame(grid, message, pill);			//display game info, modified grid and messages
 	return 0;
