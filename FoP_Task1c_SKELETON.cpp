@@ -47,6 +47,10 @@ const int  RIGHT(77);		//right arrow
 const int  LEFT(75);		//left arrow
 //defining the other command letters
 const char QUIT('Q');		//to end the game
+const char CHEAT('C');		//to end the game
+
+const int GAMEDELAY(200); // Time to wait between 'frames' in miliseconds
+
 
 #pragma region Structs
 
@@ -66,6 +70,7 @@ struct Tail : Item {
 struct Player : Item {
 	vector<Tail> tails;
 	int maxSize,mouseCount;
+	bool inCheatMode;
 
 	Player(int _x, int _y) {
 		x = _x;
@@ -73,6 +78,7 @@ struct Player : Item {
 		symbol = SPOT;
 		maxSize = 4;
 		mouseCount = 0;
+		inCheatMode = false;
 	}
 };
 
@@ -108,9 +114,10 @@ int main()
 {
 	//function declarations (prototypes)
 	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
-	void renderGame(const char g[][SIZEX], const string& mess, const Pill& pill);
+	void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, const int kc, string& mess);
 	bool wantsToQuit(const int key);
+	bool wantsToCheat(const int key);
 	bool isArrowKey(const int k);
 	int  getKeyPress();
 	void endProgram();
@@ -127,25 +134,38 @@ int main()
 	seed();								//seed the random number generator
 	SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
 	initialiseGame(grid, maze, spot, mouse, pill);	//initialise grid (incl. walls and spot)
-	int key = UP;							//current key selected by player
+	int key = UP;							//Store the current key press. Default to up so the snake moves up when the game starts
 	do {
-		renderGame(grid, message, pill);			//display game info, modified grid and messages
+		renderGame(grid, message, spot, pill);			//display game info, modified grid and messages
 
-		Sleep(100);
-		if (kbhit()) {
+		Sleep(GAMEDELAY);
+		if (kbhit()) { // Detect if any key has been pressed
+			// Only update the main key variable if the key is for movement
+			// Otherwise run the relevent function. This mean that gameplay is not interupted by 
+			// Keys such as quit
 			int newKey = getKeyPress(); 	//read in  selected key: arrow or letter command
-			if (newKey) key = newKey;
+			if (isArrowKey(newKey)) key = newKey; 
+
+			if (wantsToQuit(newKey))      //if the key is a quit key
+				endProgram();               //end the game
+			if (wantsToCheat(newKey)) {
+				spot.inCheatMode = !spot.inCheatMode;
+				if (spot.inCheatMode) {
+					cout << '\a' << '\a' << '\a';
+					spot.maxSize = 4;
+					spot.tails.clear();
+				}
+			}
+			else
+				message = "INVALID KEY!";  //set 'Invalid key' message
 		}
 
 		if (isArrowKey(key))
 			updateGame(grid, maze, spot, mouse, pill, key, message);
-		else if (wantsToQuit(key))      //if the key is a quit key
-			endProgram();               //end the game
-		else
-			message = "INVALID KEY!";  //set 'Invalid key' message
+		
 
 	} while (!wantsToQuit(key));		//while user does not want to quit
-	renderGame(grid, message, pill);			//display game info, modified grid and messages
+	renderGame(grid, message, spot, pill);			//display game info, modified grid and messages
 	return 0;
 }
 
@@ -170,11 +190,10 @@ void setSpotInitialCoordinates(Player& spot,const char maze[][SIZEX])
 { //set spot coordinates inside the grid at random at beginning of game
 
 	Position getRandomPosition(const char g[][SIZEX]);
-
 	Position playerPosition = getRandomPosition(maze);
+
 	spot.x = playerPosition.x;
 	spot.y = playerPosition.y;
-
 } 
 
 void setInitialMazeStructure(char maze[][SIZEX])
@@ -241,8 +260,11 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 		mess = "CANNOT GO THERE!";
 		break;
 	case MOUSE:
-		spot.maxSize += 2;
-		spot.mouseCount++;
+		if (!spot.inCheatMode) {
+			spot.maxSize += 2;
+			spot.mouseCount++;
+		}
+
 		setRandomItemPosition(g, mouse);
 		setRandomItemPosition(g, pill);
 		movePlayer(spot, dy, dx);
@@ -382,7 +404,11 @@ bool isArrowKey(const int key)
 }
 bool wantsToQuit(const int key)
 {	//check if the user wants to quit (when key is 'Q' or 'q')
-	return key == QUIT || key==tolower(QUIT);
+	return key == QUIT || key == tolower(QUIT);
+}
+bool wantsToCheat(const int key)
+{	//check if the user wants to quit (when key is 'Q' or 'q')
+	return key == CHEAT || key == tolower(CHEAT);
 }
 
 //---------------------------------------------------------------------------
@@ -408,7 +434,7 @@ void showMessage(const WORD backColour, const WORD textColour, int x, int y, con
 	selectTextColour(textColour);
 	cout << message + string(40 - message.length(), ' ');
 }
-void renderGame(const char g[][SIZEX], const string& mess, const Pill& pill)
+void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill)
 { //display game title, messages, maze, spot and other items on screen
 	string tostring(char x);
 	string tostring(int x);
@@ -422,7 +448,10 @@ void renderGame(const char g[][SIZEX], const string& mess, const Pill& pill)
 	//display menu options available
 	showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
 	showMessage(clRed, clYellow, 40, 5, "TO QUIT - PRESS 'Q'           ");
-
+	if (spot.inCheatMode)
+		showMessage(clRed, clYellow, 40, 6, "CHEAT MODE ON");
+	else
+		showMessage(clRed, clYellow, 40, 6, "");
 	//print auxiliary messages if any
 	showMessage(clBlack, clWhite, 40, 9, mess);	//display current message
 
