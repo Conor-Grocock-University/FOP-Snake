@@ -38,8 +38,5 @@
     <ClInclude Include="TimeUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FoP_Task1c_SKELETON.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

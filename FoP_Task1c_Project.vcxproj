@@ -26,7 +26,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConsoleUtils.h" />
-    <ClInclude Include="FoP_Task1c_SKELETON.h" />
     <ClInclude Include="RandomUtils.h" />
     <ClInclude Include="TimeUtils.h" />
   </ItemGroup>
