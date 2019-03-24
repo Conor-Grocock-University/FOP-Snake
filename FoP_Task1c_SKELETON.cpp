@@ -148,14 +148,14 @@ int main()
 	seed(); //seed the random number generator
 	SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
 	initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
-	int key = UP;
+	int key = 0;
 	//Store the current key press. Default to up so the snake moves up when the game starts
 	do
 	{
 		renderGame(grid, message, spot, pill); //display game info, modified grid and messages
 
 		Sleep(GAMEDELAY);
-		if (kbhit())
+		if (kbhit() || key == 0)
 		{
 			// Detect if any key has been pressed
 			// Only update the main key variable if the key is for movement
