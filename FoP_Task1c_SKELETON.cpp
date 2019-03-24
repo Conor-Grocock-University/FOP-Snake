@@ -168,8 +168,10 @@ int main()
 				endProgram();        //end the game
 			else if (wantsToCheat(newKey))
 				toggle_cheatmode(spot);
-            else if(newKey == 'z')
+            else if(newKey == 'z') {
                 spot.inInvincibleMode = true;
+                spot.invincibleCountdown = 50;
+            }
 			else
 				message = "INVALID KEY!"; //set 'Invalid key' message
 		}
@@ -355,10 +357,10 @@ void player_collides_with_wall_in_invincible_mode(Player& spot, const int dx, co
 	int new_x = spot.x + dx; // Store the current x and y values so that the usual method for
 	int new_y = spot.y + dy; // moving can be used meaning that the tail will move with the rest
 
-	if (new_x == 0) new_x = SIZEX - 1;      // Run through each possible of the 4 walls
-	else if (new_y == 0) new_y = SIZEY - 1; // and check if the player is 
-	else if (new_x == SIZEX) new_x = 0; // colliding with them
-	else if (new_y == SIZEY) new_y = 0; // If so move them to the opposite wall
+	if (new_x == 1) new_x = SIZEX - 2;      // Run through each possible of the 4 walls
+	else if (new_y == 1) new_y = SIZEY - 2; // and check if the player is 
+	else if (new_x == SIZEX - 1) new_x = 1; // colliding with them
+	else if (new_y == SIZEY - 1) new_y = 1; // If so move them to the opposite wall
 
 	teleportPlayer(spot, new_y, new_x);
 }
