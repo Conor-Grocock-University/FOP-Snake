@@ -73,7 +73,7 @@ struct Tail : Item
 struct Player : Item
 {
 	vector<Tail> tails;
-	int maxSize, mouseCount;
+	int maxSize, mouseCount, invincibleCountdown;
 	bool inCheatMode, inInvincibleMode;
 
 	Player(int _x, int _y)
@@ -285,6 +285,13 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 	int dx(0), dy(0);
 	setKeyDirection(key, dx, dy);
 
+    if(spot.inInvincibleMode)
+    {
+        if(spot.invincibleCountdown > 0)
+            spot.invincibleCountdown--;
+        else spot.inInvincibleMode = false;
+    }
+
 	//check new target position in grid and update game data (incl. spot coordinates) if move is possible
 	switch (g[spot.y + dy][spot.x + dx])
 	{
@@ -309,6 +316,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 		spot.maxSize = 4;
 		spot.mouseCount = 0;
 		spot.inInvincibleMode = true;
+        spot.invincibleCountdown = 20;
 		pill.show = false;
 		movePlayer(spot, dy, dx);
 		break;
@@ -390,13 +398,8 @@ bool validPosition(const char grid[][SIZEX], int x, int y)
 
 void movePlayer(Player& spot, int dy, int dx)
 {
-	while (spot.tails.size() > spot.maxSize - 1)
-	{
-		spot.tails.erase(spot.tails.begin());
-	}
-	spot.tails.emplace_back(spot.x, spot.y);
-	spot.y += dy; //go in that Y direction
-	spot.x += dx; //go in that X direction
+    void teleportPlayer(Player& spot, int y, int x);
+	teleportPlayer(spot, spot.y + dy, spot.x + dx);
 }
 
 
