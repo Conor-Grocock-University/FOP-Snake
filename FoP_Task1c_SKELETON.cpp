@@ -278,6 +278,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 	void setRandomItemPosition(const char g[][SIZEX], Item& item);
 	void player_collides_with_wall_in_invincible_mode(Player& spot, const int dx, const int dy);
 	void player_collides_with_mouse(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int dx, const int dy);
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
 	assert (isArrowKey(key));
 
 	//reset message to blank
@@ -315,8 +316,8 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 		player_collides_with_mouse(g, spot, mouse, pill, dx, dy);
 		break;
 	case PILL:
+        if(!pill.show) break;
 		spot.maxSize = 4;
-		spot.mouseCount = 0;
 		spot.inInvincibleMode = true;
         spot.invincibleCountdown = 20;
 		pill.show = false;
@@ -340,9 +341,9 @@ void player_collides_with_mouse(const char g[][SIZEX], Player& spot, Mouse& mous
 	movePlayer(spot, dy, dx);
 
 	// every two mice caught, a power up pill spawns (check for that)
-	if (spot.mouseCount == 2)
+	if (spot.mouseCount % 2 == 0)
 	{
-		spot.mouseCount = 0;
+		//spot.mouseCount = 0;
 		setRandomItemPosition(g, pill);
 		pill.show = true;
 	}
@@ -550,20 +551,25 @@ void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, c
 	void paintGrid(const char g[][SIZEX], const Player& spot, const Pill& pup);
 	//display game title
 	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
-	showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - " + getTime());
+    showMessage(clBlack, clWhite, 0, 1, "Score:" + tostring(spot.mouseCount));
+
+    showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - " + getTime());
 	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b8022088)");
 	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
 	//display menu options available
 	showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
 	showMessage(clRed, clYellow, 40, 5, "TO QUIT - PRESS 'Q'           ");
+
+
 	if (spot.inCheatMode)
-		showMessage(clRed, clYellow, 40, 6, "CHEAT MODE ON");
+		showMessage(clRed, clYellow, 40, 10, "CHEAT MODE ON");
 	else
-		showMessage(clRed, clYellow, 40, 6, "");
+		showMessage(clBlack, clYellow, 40, 10, "");
 	if (spot.inInvincibleMode)
-		showMessage(clRed, clYellow, 40, 7, "INVINCIBLE SNAKE");
+		showMessage(clRed, clYellow, 40, 11, "INVINCIBLE SNAKE");
 	else
-		showMessage(clRed, clYellow, 40, 7, "");
+		showMessage(clBlack, clYellow, 40, 11, "");
+
 
 	//print auxiliary messages if any
 	showMessage(clBlack, clWhite, 40, 9, mess); //display current message
