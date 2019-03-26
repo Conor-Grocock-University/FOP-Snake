@@ -140,15 +140,15 @@ struct Score
 int main()
 {
 	//function declarations (prototypes)
-    Score GetHighScore();
+    Score getHighScore();
 	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
     void getPlayerInformation(string& name);
-    void RecordHighScore(string playerName, Player player);
+    void recordHighScore(string playerName, Player player);
     void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
     void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill);
-    void displayPlayerInformation(string playerName, Player player, Score highest_score);
-    void ShowScoreboard();
+    void displayPlayerInformation(Player player, Score highest_score);
+    void showScoreboard();
 	void toggle_cheatmode(Player& spot);
 	void endProgram();
     void showGameOver();
@@ -159,7 +159,7 @@ int main()
     bool wantsToSeeScoreboard(int key);
     bool wantsToSave(int key);
 	bool isArrowKey(int k);
-    bool askToLoadSave();
+    bool askToloadSave();
 	int getKeyPress();
 
 	//local variable declarations 
@@ -185,7 +185,7 @@ int main()
         getPlayerInformation(playerName);
 
 
-        const Score highest_score = GetHighScore();
+        const Score highest_score = getHighScore();
 
         spot  = { 0, 0 };             //spot's position
         mouse = { 3, 3 };             //mouse's position
@@ -196,7 +196,7 @@ int main()
         
 	    if(saveFileExists(playerName))
         {
-            if(askToLoadSave())
+            if(askToloadSave())
             {
                 loadSaveFile(playerName, spot, mouse, pill);
             }
@@ -206,7 +206,7 @@ int main()
 
         while(spot.alive && !wantsToQuit(key)) {
 		    renderGame(grid, message, spot, pill); //display game info, modified grid and messages
-            displayPlayerInformation(playerName, spot, highest_score);
+            displayPlayerInformation(spot, highest_score);
 
 		    Sleep(GAMEDELAY);
 		    if (_kbhit())
@@ -223,7 +223,7 @@ int main()
 			    else if (wantsToCheat(newKey))
 				    toggle_cheatmode(spot);
                 else if (wantsToSeeScoreboard(newKey))
-                    ShowScoreboard();
+                    showScoreboard();
                 else if (wantsToSave(newKey))
                     saveToFile(playerName, spot, mouse, pill);
 			    else
@@ -236,7 +236,7 @@ int main()
         }
 
         showGameOver();
-        RecordHighScore(playerName, spot);
+        recordHighScore(playerName, spot);
 	}
 	while (!wantsToQuit(key));             //while user does not want to quit
 	renderGame(grid, message, spot, pill); //display game info, modified grid and messages
@@ -597,17 +597,17 @@ bool wantsToSeeScoreboard(const int key)
     return key == SCOREBOARD || key == tolower(SCOREBOARD);
 }
 
-void ShowScoreboard()
+void showScoreboard()
 {
-    vector<Score> LoadScores();
-    vector<Score> SortScores(vector<Score> scores);
+    vector<Score> loadScores();
+    vector<Score> sortScores(vector<Score> scores);
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
     string tostring(int x);
     int getKeyPress();
 
     clrscr();
-    vector<Score> scores = LoadScores();
-    scores = SortScores(scores);
+    vector<Score> scores = loadScores();
+    scores = sortScores(scores);
 
     showMessage(clDarkBlue, clBlue, 0, 0, "High scores");
     for (int i = 0; i <= 6; i++)
@@ -626,80 +626,7 @@ void ShowScoreboard()
     }
 }
 
-bool wantsToSave(const int key)
-{
-    return key == SAVE || key == tolower(SAVE);
-}
-
-//---------------------------------------------------------------------------
-//----- Scoring
-//---------------------------------------------------------------------------
-
-vector<Score> LoadScores()
-{
-    vector<string> split(const string& s, char splitChar);
-    bool compareScores(const Score scoreA, const Score scoreB);
-
-    vector<Score> scores;
-    string line;
-    ifstream score_file(SCOREFILE, std::ifstream::in);
-    if (score_file.is_open())
-    {
-        while (getline(score_file, line))
-        {
-            vector<string> components = split(line, '-');
-            scores.push_back({ components[0], stoi(components[1]) });
-        }
-        score_file.close();
-    }
-
-    return scores;
-}
-
-Score GetHighScore()
-{
-    vector<Score> LoadScores();
-
-    vector<Score> scores = LoadScores();
-
-    Score highest_score = { "annon", -1 };
-    for (Score score : scores)
-    {
-        if (score.mice > highest_score.mice) highest_score = score;
-    }
-
-    return highest_score;
-}
-
-vector<Score> SortScores(vector<Score> scores)
-{
-    sort(scores.begin(), scores.end(), [](const Score& l, const Score& r) {
-        return l.mice > r.mice;
-    });
-
-    return scores;
-}
-
-void RecordHighScore(string playerName, Player player)
-{
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    string tostring(int x);
-    if (!player.inCheatMode) {
-        ofstream out(SCOREFILE, fstream::app);
-        if (out.is_open()) {
-            string score_text = playerName + "-" + tostring(player.mouseCount);
-            out << score_text;
-            out << "\n";
-            out.close();
-        }
-    }
-}
-
-//---------------------------------------------------------------------------
-//----- Saving and loading game states
-//---------------------------------------------------------------------------
-
-bool askToLoadSave()
+bool askToloadSave()
 {
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
     int getKeyPress();
@@ -709,13 +636,13 @@ bool askToLoadSave()
     showMessage(clBlack, clWhite, 0, 0, "Would you like to load a previous save?");
 
     bool selectionMade = false;
-    int index = 0;
+    int index = 1;
     while (!selectionMade)
     {
-        showMessage(clBlack, clWhite, 0, index, "> ");
-        showMessage(clBlack, clWhite, 0, 1 - index, " ");
-        showMessage(clBlack, clWhite, 10, 0, "No");
-        showMessage(clBlack, clWhite, 10, 1, "Yes");
+        showMessage(clBlack, clWhite, 0, index + 1, "> ");
+        showMessage(clBlack, clWhite, 0, 2 - index, " ");
+        showMessage(clBlack, clWhite, 10, 1, "No");
+        showMessage(clBlack, clWhite, 10, 2, "Yes");
 
         const int key = getKeyPress();
         if (key == UP)
@@ -736,6 +663,79 @@ bool askToLoadSave()
     }
     return index;
 }
+
+bool wantsToSave(const int key)
+{
+    return key == SAVE || key == tolower(SAVE);
+}
+
+//---------------------------------------------------------------------------
+//----- Scoring
+//---------------------------------------------------------------------------
+
+vector<Score> loadScores()
+{
+    vector<string> split(const string& s, char splitChar);
+    bool compareScores(const Score scoreA, const Score scoreB);
+
+    vector<Score> scores;
+    string line;
+    ifstream score_file(SCOREFILE, std::ifstream::in);
+    if (score_file.is_open())
+    {
+        while (getline(score_file, line))
+        {
+            vector<string> components = split(line, '-');
+            scores.push_back({ components[0], stoi(components[1]) });
+        }
+        score_file.close();
+    }
+
+    return scores;
+}
+
+Score getHighScore()
+{
+    vector<Score> loadScores();
+
+    vector<Score> scores = loadScores();
+
+    Score highest_score = { "annon", -1 };
+    for (Score score : scores)
+    {
+        if (score.mice > highest_score.mice) highest_score = score;
+    }
+
+    return highest_score;
+}
+
+vector<Score> sortScores(vector<Score> scores)
+{
+    sort(scores.begin(), scores.end(), [](const Score& l, const Score& r) {
+        return l.mice > r.mice;
+    });
+
+    return scores;
+}
+
+void recordHighScore(string playerName, Player player)
+{
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    string tostring(int x);
+    if (!player.inCheatMode) {
+        ofstream out(SCOREFILE, fstream::app);
+        if (out.is_open()) {
+            string score_text = playerName + "-" + tostring(player.mouseCount);
+            out << score_text;
+            out << "\n";
+            out.close();
+        }
+    }
+}
+
+//---------------------------------------------------------------------------
+//----- Saving and loading game states
+//---------------------------------------------------------------------------
 
 bool saveFileExists(string playerName)
 {
