@@ -42,15 +42,19 @@ const char TUNNEL(' '); //tunnel
 const char WALL('#');   //border
 const char MOUSE('M');  //mouse
 const char PILL('o');   //power up pill
+
 //defining the command letters to move the spot on the maze
 const int UP(72);    //up arrow
 const int DOWN(80);  //down arrow
 const int RIGHT(77); //right arrow
 const int LEFT(75);  //left arrow
 //defining the other command letters
+
+//defining key binds
 const char QUIT('Q');  //to end the game
 const char CHEAT('C'); //to end the game
 const char SCOREBOARD('B'); //to end the game
+const char SAVE('S'); //to end the game
 
 const int GAMEDELAY(100); // Time to wait between 'frames' in miliseconds
 const string SCOREFILE("bestscores.txt");
@@ -153,6 +157,7 @@ int main()
 	bool wantsToQuit(int key);
     bool wantsToCheat(int key);
     bool wantsToSeeScoreboard(int key);
+    bool wantsToSave(int key);
 	bool isArrowKey(int k);
     bool askToLoadSave();
 	int getKeyPress();
@@ -219,12 +224,8 @@ int main()
 				    toggle_cheatmode(spot);
                 else if (wantsToSeeScoreboard(newKey))
                     ShowScoreboard();
-                else if (newKey == 's')
+                else if (wantsToSave(newKey))
                     saveToFile(playerName, spot, mouse, pill);
-                else if(newKey == 'z') {
-                    spot.inInvincibleMode = true;
-                    spot.invincibleCountdown = 50;
-                }
 			    else
 				    message = "INVALID KEY!"; //set 'Invalid key' message
 		    }
@@ -623,6 +624,11 @@ void ShowScoreboard()
         int newKey = getKeyPress(); //read in  selected key: arrow or letter command
         if (newKey == '\r' || newKey == '\n') restart = true;
     }
+}
+
+bool wantsToSave(const int key)
+{
+    return key == SAVE || key == tolower(SAVE);
 }
 
 //---------------------------------------------------------------------------
