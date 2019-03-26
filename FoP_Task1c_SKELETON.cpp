@@ -53,7 +53,8 @@ const char CHEAT('C'); //to end the game
 const char SCOREBOARD('B'); //to end the game
 
 const int GAMEDELAY(200); // Time to wait between 'frames' in miliseconds
-
+const string SCOREFILE("bestscores.txt");
+const string SAVEFILEEXTENSION(".save");
 
 #pragma region Structs
 
@@ -138,22 +139,26 @@ struct Score
 int main()
 {
 	//function declarations (prototypes)
+    Score GetHighScore();
 	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
     void getPlayerInformation(string& name);
-    Score GetHighScore();
     void RecordHighScore(string playerName, Player player);
     void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
+    void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill);
     void displayPlayerInformation(string playerName, Player player, Score highest_score);
     void ShowScoreboard();
+	void toggle_cheatmode(Player& spot);
+	void endProgram();
+    void showGameOver();
+    void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill);
+    bool saveFileExists(string playerName);
 	bool wantsToQuit(int key);
     bool wantsToCheat(int key);
     bool wantsToSeeScoreboard(int key);
 	bool isArrowKey(int k);
-	void toggle_cheatmode(Player& spot);
+    bool askToLoadSave();
 	int getKeyPress();
-	void endProgram();
-    void showGameOver();
 
 	//local variable declarations 
 	char grid[SIZEY][SIZEX];          //grid for display
@@ -176,20 +181,33 @@ int main()
         clrscr();
 
         getPlayerInformation(playerName);
+
+
         const Score highest_score = GetHighScore();
 
         spot  = { 0, 0 };             //spot's position
         mouse = { 3, 3 };             //mouse's position
         pill  = { 0, 0 };               //power up pill's position
 
+
 	    initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
+        
+	    if(saveFileExists(playerName))
+        {
+            if(askToLoadSave())
+            {
+                loadSaveFile(playerName, spot, mouse, pill);
+            }
+        }
+        clrscr();
 	    key = 0;
 
         while(spot.alive && !wantsToQuit(key)) {
 		    renderGame(grid, message, spot, pill); //display game info, modified grid and messages
+            displayPlayerInformation(playerName, spot, highest_score);
 
 		    Sleep(GAMEDELAY);
-		    if (_kbhit() || key == 0)
+		    if (_kbhit())
 		    {
 			    // Detect if any key has been pressed
 			    // Only update the main key variable if the key is for movement
@@ -204,6 +222,8 @@ int main()
 				    toggle_cheatmode(spot);
                 else if (wantsToSeeScoreboard(newKey))
                     ShowScoreboard();
+                else if (newKey == 's')
+                    saveToFile(playerName, spot, mouse, pill);
                 else if(newKey == 'z') {
                     spot.inInvincibleMode = true;
                     spot.invincibleCountdown = 50;
@@ -215,7 +235,6 @@ int main()
 		    if (isArrowKey(key))
 			    updateGame(grid, maze, spot, mouse, pill, key, message);
 
-            displayPlayerInformation(playerName, spot, highest_score);
         }
 
         showGameOver();
@@ -224,6 +243,115 @@ int main()
 	while (!wantsToQuit(key));             //while user does not want to quit
 	renderGame(grid, message, spot, pill); //display game info, modified grid and messages
 	return 0;
+}
+
+bool askToLoadSave()
+{
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    int getKeyPress();
+
+    clrscr();
+
+    showMessage(clBlack, clWhite, 0,0, "Would you like to load a previous save?");
+
+    bool selectionMade = false;
+    int index = 0;
+    while(!selectionMade)
+    {
+        showMessage(clBlack, clWhite, 0, index, "> ");
+        showMessage(clBlack, clWhite, 0, 1 - index, " ");
+        showMessage(clBlack, clWhite, 10, 0, "No");
+        showMessage(clBlack, clWhite, 10, 1, "Yes");
+
+        const int key = getKeyPress();
+        if (key == UP)
+        {
+            index--;
+            if (index < 0) index = 1;
+        } 
+        else if (key == DOWN)
+        {
+            index++;
+            if (index > 1) index = 0;
+        }
+        else if (key == RIGHT)
+        {
+            selectionMade = true;
+        }
+            
+    }
+    return index;
+}
+
+bool saveFileExists(string playerName)
+{
+    ifstream f(playerName + SAVEFILEEXTENSION);
+    return f.good();
+}
+
+void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill)
+{
+    vector<string> split(const string& s, char splitChar);
+
+    string objectLine;
+    string line;
+    ifstream score_file(player_name + SAVEFILEEXTENSION, std::ifstream::in);
+    if (score_file.is_open())
+    {
+        while (getline(score_file, line))
+        {
+            vector<string> components = split(line, ':');
+            if (components[0] == "player")
+            {
+                if (components[1] == "x")
+                    player.x = stoi(components[2]);
+                else if (components[1] == "y")
+                    player.y = stoi(components[2]);
+                else if (components[1] == "mouse_count")
+                    player.mouseCount = stoi(components[2]);
+                else if (components[1] == "size")
+                    player.maxSize = stoi(components[2]);
+            }
+            else if (components[0] == "mouse")
+            {
+                if (components[1] == "x")
+                    mouse.x = stoi(components[2]);
+                else if (components[1] == "y")
+                    mouse.y = stoi(components[2]);
+            }
+            else if (components[0] == "pill")
+            {
+                if (components[1] == "x")
+                    pill.x = stoi(components[2]);
+                else if (components[1] == "y")
+                    pill.y = stoi(components[2]);
+                else if (components[1] == "show")
+                    pill.show = stoi(components[2]);
+            }
+        }
+        score_file.close();
+    }
+}
+
+void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill)
+{
+    string tostring(int x);
+
+    ofstream out(player_name + SAVEFILEEXTENSION, fstream::trunc);
+    if (out.is_open()) {
+        out << "player:x:" << tostring(player.x) << "\n";
+        out << "player:y:" << tostring(player.y) << "\n";
+        out << "player:mouse_count:" << tostring(player.mouseCount) << "\n";
+        out << "player:size:" << tostring(player.maxSize) << "\n";
+
+        out << "mouse:x:" << tostring(mouse.x) << "\n";
+        out << "mouse:y:" << tostring(mouse.y) << "\n";
+
+        out << "pill:x:" << tostring(pill.x) << "\n";
+        out << "pill:y:" << tostring(pill.y) << "\n";
+        out << "pill:show:" << tostring(pill.show) << "\n";
+        out.close();
+    }
 }
 
 void showGameOver()
@@ -287,7 +415,7 @@ vector<Score> LoadScores()
 
     vector<Score> scores;
     string line;
-    ifstream score_file("bestScores.txt", std::ifstream::in);
+    ifstream score_file(SCOREFILE, std::ifstream::in);
     if (score_file.is_open())
     {
         while (getline(score_file, line))
@@ -330,7 +458,7 @@ void RecordHighScore(string playerName, Player player)
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
     string tostring(int x);
 
-    ofstream out("bestScores.txt", fstream::app);
+    ofstream out(SCOREFILE, fstream::app);
     if(out.is_open()) {
         string score_text = playerName + "-" + tostring(player.mouseCount);
         out << score_text;
@@ -721,7 +849,6 @@ void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, c
 	void paintGrid(const char g[][SIZEX], const Player& spot, const Pill& pup);
 	//display game title
 	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
-    showMessage(clBlack, clWhite, 0, 1, "Score:" + tostring(spot.mouseCount));
 
     showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - " + getTime());
 	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b8022088)");
