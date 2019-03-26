@@ -56,9 +56,10 @@ const char CHEAT('C'); //to end the game
 const char SCOREBOARD('B'); //to end the game
 const char SAVE('S'); //to end the game
 
-const int GAMEDELAY(100); // Time to wait between 'frames' in miliseconds
+const int GAMEDELAY(170); // Time to wait between 'frames' in miliseconds
 const string SCOREFILE("bestscores.txt");
 const string SAVEFILEEXTENSION(".save");
+const int MAXSCORE(10);
 
 #pragma region Structs
 
@@ -81,7 +82,7 @@ struct Tail : Item
 struct Player : Item
 {
 	vector<Tail> tails;
-	int maxSize, mouseCount, invincibleCountdown;
+	int maxSize, mouseCount, invincibleCountdown, numberOfMoves;
 	bool inCheatMode, inInvincibleMode, alive = true;
 
 	Player(int _x, int _y)
@@ -94,6 +95,7 @@ struct Player : Item
 		inCheatMode = false;
 		inInvincibleMode = false;
         alive = true;
+        numberOfMoves = 0;
 	}
 };
 
@@ -128,7 +130,7 @@ struct Position
 struct Score
 {
     string name;
-    int mice;
+    int moves;
 };
 
 #pragma endregion
@@ -143,22 +145,22 @@ int main()
     Score getHighScore();
 	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
     void getPlayerInformation(string& name);
+    void displayPlayerInformation(Player player, Score highest_score);
     void recordHighScore(string playerName, Player player);
     void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
-    void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill);
-    void displayPlayerInformation(Player player, Score highest_score);
     void showScoreboard();
 	void toggle_cheatmode(Player& spot);
 	void endProgram();
     void showGameOver();
+    void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill);
     void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill);
     bool saveFileExists(string playerName);
 	bool wantsToQuit(int key);
     bool wantsToCheat(int key);
     bool wantsToSeeScoreboard(int key);
     bool wantsToSave(int key);
-	bool isArrowKey(int k);
+	bool isArrowKey(int key);
     bool askToloadSave();
 	int getKeyPress();
 
@@ -204,7 +206,7 @@ int main()
         clrscr();
 	    key = 0;
 
-        while(spot.alive && !wantsToQuit(key)) {
+        while(spot.alive && spot.mouseCount < MAXSCORE && !wantsToQuit(key)) {
 		    renderGame(grid, message, spot, pill); //display game info, modified grid and messages
             displayPlayerInformation(spot, highest_score);
 
@@ -341,11 +343,15 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
             spot.invincibleCountdown--;
         else spot.inInvincibleMode = false;
     }
+    spot.numberOfMoves++;
 
 	//check new target position in grid and update game data (incl. spot coordinates) if move is possible
 	switch (g[spot.y + dy][spot.x + dx])
 	{
 		//...depending on what's on the target position in grid...
+    case TAIL:
+        spot.alive = false;
+        break;
 	case TUNNEL: //can move
 		movePlayer(spot, dy, dx);
 		break;
@@ -363,7 +369,11 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 		player_collides_with_mouse(g, spot, mouse, pill, dx, dy);
 		break;
 	case PILL:
-        if(!pill.show) break;
+        if(!pill.show)
+        {
+            movePlayer(spot, dy, dx);
+            break;
+        }
 		spot.maxSize = 4;
 		spot.inInvincibleMode = true;
         spot.invincibleCountdown = 20;
@@ -614,7 +624,7 @@ void showScoreboard()
     {
         string score_msg;
 
-        if (scores.size() > i) score_msg = scores[i].name + ": " + tostring(scores[i].mice);
+        if (scores.size() > i) score_msg = scores[i].name + ": " + tostring(scores[i].moves);
         else score_msg = "anonymous: -1";
         showMessage(clBlack, clWhite, 0, i, score_msg);
     }
@@ -670,7 +680,7 @@ bool wantsToSave(const int key)
 }
 
 //---------------------------------------------------------------------------
-//----- Scoring
+//----- Scores
 //---------------------------------------------------------------------------
 
 vector<Score> loadScores()
@@ -700,10 +710,10 @@ Score getHighScore()
 
     vector<Score> scores = loadScores();
 
-    Score highest_score = { "annon", -1 };
+    Score highest_score = { "annon", 500 };
     for (Score score : scores)
     {
-        if (score.mice > highest_score.mice) highest_score = score;
+        if (score.moves < highest_score.moves) highest_score = score;
     }
 
     return highest_score;
@@ -712,7 +722,7 @@ Score getHighScore()
 vector<Score> sortScores(vector<Score> scores)
 {
     sort(scores.begin(), scores.end(), [](const Score& l, const Score& r) {
-        return l.mice > r.mice;
+        return l.moves > r.moves;
     });
 
     return scores;
@@ -765,6 +775,8 @@ void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill)
                     player.mouseCount = stoi(components[2]);
                 else if (components[1] == "size")
                     player.maxSize = stoi(components[2]);
+                else if (components[1] == "moves")
+                    player.numberOfMoves = stoi(components[2]);
             }
             else if (components[0] == "mouse")
             {
@@ -796,6 +808,7 @@ void saveToFile(const string player_name, const Player player, const Mouse mouse
         out << "player:x:" << tostring(player.x) << "\n";
         out << "player:y:" << tostring(player.y) << "\n";
         out << "player:mouse_count:" << tostring(player.mouseCount) << "\n";
+        out << "player:moves:" << tostring(player.numberOfMoves) << "\n";
         out << "player:size:" << tostring(player.maxSize) << "\n";
 
         out << "mouse:x:" << tostring(mouse.x) << "\n";
@@ -824,9 +837,10 @@ void displayPlayerInformation(Player player, Score highest_score)
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
     string tostring(int x);
 
-    showMessage(clWhite, clBlack, 40, 7, "Score: " + tostring(player.mouseCount));
-    showMessage(clWhite, clBlack, 40, 8, "High score");
-    showMessage(clWhite, clBlack, 40, 9, highest_score.name + ": " + tostring(highest_score.mice));
+    showMessage(clWhite, clBlack, 40, 7, "Score: " + tostring(player.numberOfMoves));
+    showMessage(clWhite, clBlack, 40, 8, tostring(player.mouseCount) +" out of "+tostring(MAXSCORE));
+    showMessage(clWhite, clBlack, 40, 9, "High score");
+    showMessage(clWhite, clBlack, 40, 10, highest_score.name + ": " + tostring(highest_score.moves));
 }
 
 //---------------------------------------------------------------------------
@@ -865,6 +879,7 @@ void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, c
 	string tostring(int x);
 	void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
 	void paintGrid(const char g[][SIZEX], const Player& spot, const Pill& pup);
+
 	//display game title
 	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
 
@@ -877,17 +892,17 @@ void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, c
 
 
 	if (spot.inCheatMode)
-		showMessage(clRed, clYellow, 40, 10, "CHEAT MODE ON");
+		showMessage(clRed, clYellow, 40, 14, "CHEAT MODE ON");
 	else
-		showMessage(clBlack, clYellow, 40, 10, "");
+		showMessage(clBlack, clYellow, 40, 14, "");
 	if (spot.inInvincibleMode)
-		showMessage(clRed, clYellow, 40, 11, "INVINCIBLE SNAKE");
+		showMessage(clRed, clYellow, 40, 15, "INVINCIBLE SNAKE");
 	else
-		showMessage(clBlack, clYellow, 40, 11, "");
+		showMessage(clBlack, clYellow, 40, 15, "");
 
 
 	//print auxiliary messages if any
-	showMessage(clBlack, clWhite, 40, 10, mess); //display current message
+	showMessage(clBlack, clWhite, 40, 11, mess); //display current message
 
 	//display grid contents
 	paintGrid(g, spot, pill);
