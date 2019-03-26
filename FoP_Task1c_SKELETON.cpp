@@ -140,9 +140,10 @@ int main()
 	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
     void getPlayerInformation(string& name);
     Score GetHighScore();
+    void RecordHighScore(string playerName, Player player);
     void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
-    void displayPlayerInformation(string playerName, Score highest_score);
+    void displayPlayerInformation(string playerName, Player player, Score highest_score);
 	bool wantsToQuit(int key);
 	bool wantsToCheat(int key);
 	bool isArrowKey(int k);
@@ -172,7 +173,7 @@ int main()
         clrscr();
 
         getPlayerInformation(playerName);
-        Score highest_score = GetHighScore();
+        const Score highest_score = GetHighScore();
 
         spot  = { 0, 0 };             //spot's position
         mouse = { 3, 3 };             //mouse's position
@@ -209,10 +210,11 @@ int main()
 		    if (isArrowKey(key))
 			    updateGame(grid, maze, spot, mouse, pill, key, message);
 
-            displayPlayerInformation(playerName, highest_score);
+            displayPlayerInformation(playerName, spot, highest_score);
         }
 
         showGameOver();
+        RecordHighScore(playerName, spot);
 	}
 	while (!wantsToQuit(key));             //while user does not want to quit
 	renderGame(grid, message, spot, pill); //display game info, modified grid and messages
@@ -225,6 +227,8 @@ void showGameOver()
     int getKeyPress();
 
     clrscr();
+
+
     showMessage(clBlack, clWhite, 0, 0, "Game over");
     showMessage(clBlack, clWhite, 0, 1, "Press return to continue");
 
@@ -249,7 +253,7 @@ vector<Score> LoadScores()
 
     vector<Score> scores;
     string line;
-    ifstream score_file("bestScores.txt");
+    ifstream score_file("bestScores.txt", std::ifstream::in);
     if (score_file.is_open())
     {
         while (getline(score_file, line))
@@ -269,7 +273,7 @@ Score GetHighScore()
 
     vector<Score> scores = LoadScores();
 
-    Score highest_score = {"test", 50};
+    Score highest_score = {"annon", -1};
     for (Score score : scores)
     {
         if(score.mice > highest_score.mice) highest_score = score;
@@ -278,9 +282,28 @@ Score GetHighScore()
     return highest_score;
 }
 
-void displayPlayerInformation(string playerName, Score highest_score)
+void RecordHighScore(string playerName, Player player)
 {
-    
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    string tostring(int x);
+
+    ofstream out("bestScores.txt");
+    if(out.is_open()) {
+        string score_text = playerName + "-" + tostring(player.mouseCount);
+        out << score_text;
+        out << "\n";
+        out.close();
+    }
+}
+
+void displayPlayerInformation(string playerName, Player player, Score highest_score)
+{
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    string tostring(int x);
+
+    showMessage(clWhite, clBlack, 40, 7, "Score: " + tostring(player.mouseCount));
+    showMessage(clWhite, clBlack, 40, 8, "High score");
+    showMessage(clWhite, clBlack, 40, 9, highest_score.name + ": " + tostring(highest_score.mice));
 }
 
 //---------------------------------------------------------------------------
@@ -670,7 +693,7 @@ void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, c
 
 
 	//print auxiliary messages if any
-	showMessage(clBlack, clWhite, 40, 9, mess); //display current message
+	showMessage(clBlack, clWhite, 40, 10, mess); //display current message
 
 	//display grid contents
 	paintGrid(g, spot, pill);
