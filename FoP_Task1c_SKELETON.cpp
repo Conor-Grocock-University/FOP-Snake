@@ -50,6 +50,7 @@ const int LEFT(75);  //left arrow
 //defining the other command letters
 const char QUIT('Q');  //to end the game
 const char CHEAT('C'); //to end the game
+const char SCOREBOARD('B'); //to end the game
 
 const int GAMEDELAY(200); // Time to wait between 'frames' in miliseconds
 
@@ -144,8 +145,10 @@ int main()
     void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
     void displayPlayerInformation(string playerName, Player player, Score highest_score);
+    void ShowScoreboard();
 	bool wantsToQuit(int key);
-	bool wantsToCheat(int key);
+    bool wantsToCheat(int key);
+    bool wantsToSeeScoreboard(int key);
 	bool isArrowKey(int k);
 	void toggle_cheatmode(Player& spot);
 	int getKeyPress();
@@ -199,6 +202,8 @@ int main()
 				    endProgram();        //end the game
 			    else if (wantsToCheat(newKey))
 				    toggle_cheatmode(spot);
+                else if (wantsToSeeScoreboard(newKey))
+                    ShowScoreboard();
                 else if(newKey == 'z') {
                     spot.inInvincibleMode = true;
                     spot.invincibleCountdown = 50;
@@ -246,6 +251,35 @@ void getPlayerInformation(string& name)
     cin >> name;
 }
 
+void ShowScoreboard()
+{
+    vector<Score> LoadScores();
+    vector<Score> SortScores(vector<Score> scores);
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    string tostring(int x);
+    int getKeyPress();
+
+    clrscr();
+    vector<Score> scores = LoadScores();
+    scores = SortScores(scores);
+
+    showMessage(clDarkBlue, clBlue, 0, 0, "High scores");
+    for(int i = 0; i <= 6; i++)
+    {
+        string score_msg;
+
+        if(scores.size() > i) score_msg = scores[i].name + ": " + tostring(scores[i].mice);
+        else score_msg = "anonymous: -1";
+        showMessage(clBlack, clWhite, 0, i, score_msg);
+    }
+
+    bool restart = false;
+    while (!restart) {
+        int newKey = getKeyPress(); //read in  selected key: arrow or letter command
+        if (newKey == '\r' || newKey == '\n') restart = true;
+    }
+}
+
 vector<Score> LoadScores()
 {
     vector<string> split(const string& s, char splitChar);
@@ -282,12 +316,21 @@ Score GetHighScore()
     return highest_score;
 }
 
+vector<Score> SortScores(vector<Score> scores)
+{
+    sort(scores.begin(), scores.end(), [](const Score& l, const Score& r) {
+        return l.mice > r.mice;
+    });
+
+    return scores;
+}
+
 void RecordHighScore(string playerName, Player player)
 {
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
     string tostring(int x);
 
-    ofstream out("bestScores.txt");
+    ofstream out("bestScores.txt", fstream::app);
     if(out.is_open()) {
         string score_text = playerName + "-" + tostring(player.mouseCount);
         out << score_text;
@@ -630,8 +673,14 @@ bool wantsToQuit(const int key)
 
 bool wantsToCheat(const int key)
 {
-	//check if the user wants to quit (when key is 'Q' or 'q')
-	return key == CHEAT || key == tolower(CHEAT);
+    //check if the user wants to quit (when key is 'Q' or 'q')
+    return key == CHEAT || key == tolower(CHEAT);
+}
+
+bool wantsToSeeScoreboard(const int key)
+{
+    //check if the user wants to quit (when key is 'Q' or 'q')
+    return key == SCOREBOARD || key == tolower(SCOREBOARD);
 }
 
 //---------------------------------------------------------------------------
