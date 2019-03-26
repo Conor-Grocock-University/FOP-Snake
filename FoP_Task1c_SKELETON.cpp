@@ -18,6 +18,8 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <fstream>
+#include <algorithm>
 using namespace std;
 
 //include our own libraries
@@ -74,7 +76,7 @@ struct Player : Item
 {
 	vector<Tail> tails;
 	int maxSize, mouseCount, invincibleCountdown;
-	bool inCheatMode, inInvincibleMode;
+	bool inCheatMode, inInvincibleMode, alive = true;
 
 	Player(int _x, int _y)
 	{
@@ -85,6 +87,7 @@ struct Player : Item
 		mouseCount = 0;
 		inCheatMode = false;
 		inInvincibleMode = false;
+        alive = true;
 	}
 };
 
@@ -116,6 +119,12 @@ struct Position
 	int x, y;
 };
 
+struct Score
+{
+    string name;
+    int mice;
+};
+
 #pragma endregion
 
 //---------------------------------------------------------------------------
@@ -123,67 +132,156 @@ struct Position
 //---------------------------------------------------------------------------
 
 
+
+
 int main()
 {
 	//function declarations (prototypes)
 	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
-	void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
+    void getPlayerInformation(string& name);
+    Score GetHighScore();
+    void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
 	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
+    void displayPlayerInformation(string playerName, Score highest_score);
 	bool wantsToQuit(int key);
 	bool wantsToCheat(int key);
 	bool isArrowKey(int k);
 	void toggle_cheatmode(Player& spot);
 	int getKeyPress();
 	void endProgram();
+    void showGameOver();
 
 	//local variable declarations 
 	char grid[SIZEY][SIZEX];          //grid for display
 	char maze[SIZEY][SIZEX];          //structure of the maze
+	string message("LET'S START..."); //current message to player
+    string playerName;
+
 	Player spot = {0, 0};             //spot's position
 	Mouse mouse = {3, 3};             //mouse's position
 	Pill pill = {0, 0};               //power up pill's position
-	string message("LET'S START..."); //current message to player
 
-	//action...
+    //action...
 	seed(); //seed the random number generator
 	SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
-	initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
-	int key = 0;
+    int key = 0;
+
 	//Store the current key press. Default to up so the snake moves up when the game starts
 	do
 	{
-		renderGame(grid, message, spot, pill); //display game info, modified grid and messages
+        clrscr();
 
-		Sleep(GAMEDELAY);
-		if (kbhit() || key == 0)
-		{
-			// Detect if any key has been pressed
-			// Only update the main key variable if the key is for movement
-			// Otherwise run the relevent function. This mean that gameplay is not interupted by 
-			// Keys such as quit
-			int newKey = getKeyPress(); //read in  selected key: arrow or letter command
-			if (isArrowKey(newKey)) key = newKey;
+        getPlayerInformation(playerName);
+        Score highest_score = GetHighScore();
 
-			if (wantsToQuit(newKey)) //if the key is a quit key
-				endProgram();        //end the game
-			else if (wantsToCheat(newKey))
-				toggle_cheatmode(spot);
-            else if(newKey == 'z') {
-                spot.inInvincibleMode = true;
-                spot.invincibleCountdown = 50;
-            }
-			else
-				message = "INVALID KEY!"; //set 'Invalid key' message
-		}
+        spot  = { 0, 0 };             //spot's position
+        mouse = { 3, 3 };             //mouse's position
+        pill  = { 0, 0 };               //power up pill's position
 
-		if (isArrowKey(key))
-			updateGame(grid, maze, spot, mouse, pill, key, message);
+	    initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
+	    key = 0;
+
+        while(spot.alive && !wantsToQuit(key)) {
+		    renderGame(grid, message, spot, pill); //display game info, modified grid and messages
+
+		    Sleep(GAMEDELAY);
+		    if (_kbhit() || key == 0)
+		    {
+			    // Detect if any key has been pressed
+			    // Only update the main key variable if the key is for movement
+			    // Otherwise run the relevent function. This mean that gameplay is not interupted by 
+			    // Keys such as quit
+			    int newKey = getKeyPress(); //read in  selected key: arrow or letter command
+			    if (isArrowKey(newKey)) key = newKey;
+
+			    if (wantsToQuit(newKey)) //if the key is a quit key
+				    endProgram();        //end the game
+			    else if (wantsToCheat(newKey))
+				    toggle_cheatmode(spot);
+                else if(newKey == 'z') {
+                    spot.inInvincibleMode = true;
+                    spot.invincibleCountdown = 50;
+                }
+			    else
+				    message = "INVALID KEY!"; //set 'Invalid key' message
+		    }
+
+		    if (isArrowKey(key))
+			    updateGame(grid, maze, spot, mouse, pill, key, message);
+
+            displayPlayerInformation(playerName, highest_score);
+        }
+
+        showGameOver();
 	}
 	while (!wantsToQuit(key));             //while user does not want to quit
 	renderGame(grid, message, spot, pill); //display game info, modified grid and messages
 	return 0;
 }
 
+void showGameOver()
+{
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    int getKeyPress();
+
+    clrscr();
+    showMessage(clBlack, clWhite, 0, 0, "Game over");
+    showMessage(clBlack, clWhite, 0, 1, "Press return to continue");
+
+    bool restart = false;
+    while(!restart) {
+        int newKey = getKeyPress(); //read in  selected key: arrow or letter command
+        if(newKey == '\r' || newKey == '\n') restart=true;
+    }
+}
+
+void getPlayerInformation(string& name)
+{
+    gotoxy(0,1);
+    cout << "Please enter your name" << endl;
+    cin >> name;
+}
+
+vector<Score> LoadScores()
+{
+    vector<string> split(const string& s, char splitChar);
+    bool compareScores(const Score scoreA, const Score scoreB);
+
+    vector<Score> scores;
+    string line;
+    ifstream score_file("bestScores.txt");
+    if (score_file.is_open())
+    {
+        while (getline(score_file, line))
+        {
+            vector<string> components = split(line, '-');
+            scores.push_back({components[0], stoi(components[1])});
+        }
+        score_file.close();
+    }
+
+    return scores;
+}
+
+Score GetHighScore()
+{
+    vector<Score> LoadScores();
+
+    vector<Score> scores = LoadScores();
+
+    Score highest_score = {"test", 50};
+    for (Score score : scores)
+    {
+        if(score.mice > highest_score.mice) highest_score = score;
+    }
+
+    return highest_score;
+}
+
+void displayPlayerInformation(string playerName, Score highest_score)
+{
+    
+}
 
 //---------------------------------------------------------------------------
 //----- initialise game state
@@ -309,7 +407,7 @@ void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pil
 			player_collides_with_wall_in_invincible_mode(spot, dx, dy);
 		}
 		else {
-			mess = "CANNOT GO THERE!";
+			spot.alive = false;
 		}
 		break;
 	case MOUSE:
@@ -615,6 +713,18 @@ void paintGrid(const char g[][SIZEX], const Player& player, const Pill& pill)
 		}
 		cout << endl;
 	}
+}
+
+vector<string> split(const string& s, char splitChar)
+{
+    vector<string> components;
+    string component;
+    istringstream componentStream(s);
+    while (getline(componentStream, component, splitChar))
+    {
+        components.push_back(component);
+    }
+    return components;
 }
 
 void endProgram()
