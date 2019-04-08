@@ -21,12 +21,25 @@
   <ItemGroup>
     <ClCompile Include="ConsoleUtils.cpp" />
     <ClCompile Include="FoP_Task1c_SKELETON.cpp" />
+    <ClCompile Include="Item.cpp" />
+    <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="Pill.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="RandomUtils.cpp" />
+    <ClCompile Include="Score.cpp" />
+    <ClCompile Include="Tail.cpp" />
     <ClCompile Include="TimeUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConsoleUtils.h" />
+    <ClInclude Include="Globals.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="Mouse.h" />
+    <ClInclude Include="Pill.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="RandomUtils.h" />
+    <ClInclude Include="Score.h" />
+    <ClInclude Include="Tail.h" />
     <ClInclude Include="TimeUtils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -20,117 +20,28 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
-using namespace std;
 
-//include our own libraries
+#include "Player.h"
+#include "Mouse.h"
+#include "Pill.h"
+#include "Score.h"
+#include "Globals.h"
+
 #include "RandomUtils.h"    //for seed, random
 #include "ConsoleUtils.h"	//for clrscr, gotoxy, etc.
 #include "TimeUtils.h"		//for getSystemTime, timeToString, etc.
-//#include "FoP_Task1c_SKELETON.h"
+
+using namespace std;
 
 //---------------------------------------------------------------------------
 //----- define constants
 //---------------------------------------------------------------------------
 
-//defining the size of the grid
-const int SIZEX(15); //horizontal dimension
-const int SIZEY(10); //vertical dimension
-//defining symbols used for display of the grid and content
-const char SPOT('@');   //spot
-const char TAIL('+');   //spot
-const char TUNNEL(' '); //tunnel
-const char WALL('#');   //border
-const char MOUSE('M');  //mouse
-const char PILL('o');   //power up pill
-
-//defining the command letters to move the spot on the maze
-const int UP(72);    //up arrow
-const int DOWN(80);  //down arrow
-const int RIGHT(77); //right arrow
-const int LEFT(75);  //left arrow
-//defining the other command letters
-
-//defining key binds
-const char QUIT('Q');  //to end the game
-const char CHEAT('C'); //to end the game
-const char SCOREBOARD('B'); //to end the game
-const char SAVE('S'); //to end the game
-
-const int GAMEDELAY(170); // Time to wait between 'frames' in miliseconds
-const string SCOREFILE("bestscores.txt");
-const string SAVEFILEEXTENSION(".save");
-const int MAXSCORE(10);
-
 #pragma region Structs
-
-struct Item
-{
-	int x, y;
-	char symbol;
-};
-
-struct Tail : Item
-{
-	Tail(int _x, int _y)
-	{
-		x = _x;
-		y = _y;
-		symbol = TAIL;
-	}
-};
-
-struct Player : Item
-{
-	vector<Tail> tails;
-	int maxSize, mouseCount, invincibleCountdown, numberOfMoves;
-	bool inCheatMode, inInvincibleMode, alive = true;
-
-	Player(int _x, int _y)
-	{
-		x = _x;
-		y = _y;
-		symbol = SPOT;
-		maxSize = 4;
-		mouseCount = 0;
-		inCheatMode = false;
-		inInvincibleMode = false;
-        alive = true;
-        numberOfMoves = 0;
-	}
-};
-
-struct Mouse : Item
-{
-	Mouse(int _x, int _y)
-	{
-		x = _x;
-		y = _y;
-		symbol = MOUSE;
-	}
-};
-
-struct Pill : Item
-{
-	bool show;
-
-	Pill(int _x, int _y)
-	{
-		x = _x;
-		y = _y;
-		symbol = PILL;
-		show = false;
-	}
-};
 
 struct Position
 {
-	int x, y;
-};
-
-struct Score
-{
-    string name;
-    int moves;
+    int x, y;
 };
 
 #pragma endregion
@@ -141,394 +52,317 @@ struct Score
 
 int main()
 {
-	//function declarations (prototypes)
-    Score getHighScore();
-	void initialiseGame(char g[][SIZEX], char m[][SIZEX], Player& spot, Mouse& mouse, Pill& pill);
-    void getPlayerInformation(string& name);
-    void displayPlayerInformation(Player player, Score highest_score);
-    void recordHighScore(string playerName, Player player);
-    void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill);
-	void updateGame(char g[][SIZEX], const char m[][SIZEX], Player& s, Mouse& mouse, Pill& pill, int kc, string& mess);
+    //function declarations (prototypes)
+    void initialiseGame(char             g[][SIZEX], char m[][SIZEX], player& spot, mouse& mouse, pill& pill);
+    void getPlayerInformation(string&    name);
+    void displayPlayerInformation(player player, score             highest_score);
+    void renderGame(const char           g[][SIZEX], const string& mess, const player& spot, const pill& pill);
+    void updateGame(char                 g[][SIZEX],
+                    const char           m[][SIZEX],
+                    player&              s,
+                    mouse&               mouse,
+                    pill&                pill,
+                    int                  kc,
+                    string&              mess);
     void showScoreboard();
-	void toggle_cheatmode(Player& spot);
-	void endProgram();
+    void endProgram();
     void showGameOver();
-    void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill);
-    void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill);
-    bool saveFileExists(string playerName);
-	bool wantsToQuit(int key);
-    bool wantsToCheat(int key);
+    void saveToFile(string        player_name, player  player, mouse  mouse, pill  pill);
+    void loadSaveFile(string      player_name, player& player, mouse& mouse, pill& pill);
+    bool saveFileExists(string    playerName);
+    bool wantsToQuit(int          key);
+    bool wantsToCheat(int         key);
     bool wantsToSeeScoreboard(int key);
-    bool wantsToSave(int key);
-	bool isArrowKey(int key);
+    bool wantsToSave(int          key);
+    bool isArrowKey(int           key);
     bool askToloadSave();
-	int getKeyPress();
+    int  getKeyPress();
 
-	//local variable declarations 
-	char grid[SIZEY][SIZEX];          //grid for display
-	char maze[SIZEY][SIZEX];          //structure of the maze
-	string message("LET'S START..."); //current message to player
-    string playerName;
+    //local variable declarations 
+    char   grid[SIZEY][SIZEX];        //grid for display
+    char   maze[SIZEY][SIZEX];        //structure of the maze
+    string message("LET'S START..."); //current message to player
+    string playerName;                // Players chosen name
 
-	Player spot = {0, 0};             //spot's position
-	Mouse mouse = {3, 3};             //mouse's position
-	Pill pill = {0, 0};               //power up pill's position
+    player spot  = {0, 0}; //spot's position
+    mouse  mouse = {3, 3}; //mouse's position
+    pill   pill  = {0, 0}; //power up pill's position
 
     //action...
-	seed(); //seed the random number generator
-	SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
-    int key = 0;
+    seed(); //seed the random number generator
+    SetConsoleTitle("FoP 2018-19 - Task 1c - Game Skeleton");
+    int key = 0; // Store the keycode (Used for automatic movement)
 
-	//Store the current key press. Default to up so the snake moves up when the game starts
-	do
-	{
-        clrscr();
+    //Store the current key press. Default to up so the snake moves up when the game starts
+    do
+    {
+        clrscr(); // Clear the screen after each game
 
         getPlayerInformation(playerName);
+        // Show a screen to get the player name, return it into the variable playerName
 
+        const score highest_score = score::get_high_score(); // Get the current highest score from a file, 
 
-        const Score highest_score = getHighScore();
+        spot  = {0, 0}; //spot's position
+        mouse = {3, 3}; //mouse's position
+        pill  = {0, 0}; //power up pill's position
 
-        spot  = { 0, 0 };             //spot's position
-        mouse = { 3, 3 };             //mouse's position
-        pill  = { 0, 0 };               //power up pill's position
+        initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
 
-
-	    initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
-        
-	    if(saveFileExists(playerName))
+        if (saveFileExists(playerName)) // Run a check to see if a save file exists
         {
-            if(askToloadSave())
+            if (askToloadSave()) // Ask if the player wants to load the save file
             {
                 loadSaveFile(playerName, spot, mouse, pill);
+                // Run the function to load the data from the save file into the 3 'actors'
             }
         }
-        clrscr();
-	    key = 0;
+        clrscr(); // Clear the screen before the game begins
+        key = 0;  // Reset the key to 0 before the game
 
-        while(spot.alive && spot.mouseCount < MAXSCORE && !wantsToQuit(key)) {
-		    renderGame(grid, message, spot, pill); //display game info, modified grid and messages
-            displayPlayerInformation(spot, highest_score);
+        while (spot.alive && spot.mouseCount < MAXSCORE && !wantsToQuit(key))
+        {
+            renderGame(grid, message, spot, pill);         //display game info, modified grid and messages
+            displayPlayerInformation(spot, highest_score); // Show the score information on the side of the screen
 
-		    Sleep(GAMEDELAY);
-		    if (_kbhit())
-		    {
-			    // Detect if any key has been pressed
-			    // Only update the main key variable if the key is for movement
-			    // Otherwise run the relevent function. This mean that gameplay is not interupted by 
-			    // Keys such as quit
-			    int newKey = getKeyPress(); //read in  selected key: arrow or letter command
-			    if (isArrowKey(newKey)) key = newKey;
+            Sleep(GAMEDELAY);
+            if (_kbhit())
+            {
+                // Detect if any key has been pressed
+                // Only update the main key variable if the key is for movement
+                // Otherwise run the relevent function. This mean that game play 
+                // is not interrupted by keys such as quit
+                int newKey = getKeyPress(); //read in  selected key: arrow or letter command
 
-			    if (wantsToQuit(newKey)) //if the key is a quit key
-				    endProgram();        //end the game
-			    else if (wantsToCheat(newKey))
-				    toggle_cheatmode(spot);
-                else if (wantsToSeeScoreboard(newKey))
-                    showScoreboard();
-                else if (wantsToSave(newKey))
-                    saveToFile(playerName, spot, mouse, pill);
-			    else
-				    message = "INVALID KEY!"; //set 'Invalid key' message
-		    }
+                if (isArrowKey(newKey))
+                    // If the key is an arrow key, set the key variable, so it can be used to direct movement
+                    key = newKey;
+                else if (wantsToQuit(newKey))                  //if the key is a quit key
+                    endProgram();                              //end the game
+                else if (wantsToCheat(newKey))                 // If the key is the cheat key
+                    spot.toggle_cheatmode();                   // Enable cheat mode
+                else if (wantsToSeeScoreboard(newKey))         // If the key is the scoreboard key
+                    showScoreboard();                          // Clear the screen and show the scoreboard
+                else if (wantsToSave(newKey))                  // IF the key is the save key
+                    saveToFile(playerName, spot, mouse, pill); // Save the current game to a file
+                else
+                    message = "INVALID KEY!"; //set 'Invalid key' message
+            }
 
-		    if (isArrowKey(key))
-			    updateGame(grid, maze, spot, mouse, pill, key, message);
-
+            if (isArrowKey(key)) // Update the game if the current key is an arrow key, if not, re run the loop
+                updateGame(grid, maze, spot, mouse, pill, key, message);
         }
 
         showGameOver();
-        recordHighScore(playerName, spot);
-	}
-	while (!wantsToQuit(key));             //while user does not want to quit
-	renderGame(grid, message, spot, pill); //display game info, modified grid and messages
-	return 0;
+        score::record_high_score(playerName, spot);
+    }
+    while (!wantsToQuit(key));             //while user does not want to quit
+    renderGame(grid, message, spot, pill); //display game info, modified grid and messages
+    return 0;
 }
-
 
 //---------------------------------------------------------------------------
 //----- initialise game state
 //---------------------------------------------------------------------------
 
-void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], Player& spot, Mouse& mouse, Pill& pill)
+void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], player& spot, mouse& mouse, pill& pill)
 {
-	//initialise grid and place spot in middle
-	void setInitialMazeStructure(char maze[][SIZEX]);
-	void setRandomItemPosition(const char g[][SIZEX], Item& item);
-	void updateGrid(char g[][SIZEX], const char m[][SIZEX], const Player& i, const Mouse& n, const Pill& p);
+    //initialise grid and place spot in middle
+    void setInitialMazeStructure(char     maze[][SIZEX]);
+    void setRandomItemPosition(const char g[][SIZEX], item& item);
+    void updateGrid(char                  g[][SIZEX],
+                    const char            m[][SIZEX],
+                    const player&         i,
+                    const ::mouse&        n,
+                    const ::pill&         p);
 
-	setInitialMazeStructure(maze); //initialise maze
-	setRandomItemPosition(maze, spot);
-	setRandomItemPosition(maze, mouse);
-	updateGrid(grid, maze, spot, mouse, pill); //prepare grid
+    setInitialMazeStructure(maze);             //initialise maze
+    setRandomItemPosition(maze, spot);         // Place the player in a random position on the grid
+    setRandomItemPosition(maze, mouse);        // Place the mouse in a random position
+    setRandomItemPosition(maze, pill);         // Place the pill in a random position
+    updateGrid(grid, maze, spot, mouse, pill); //prepare grid
 }
 
-void setSpotInitialCoordinates(Player& spot, const char maze[][SIZEX])
+void setSpotInitialCoordinates(player& spot, const char maze[][SIZEX])
 {
-	//set spot coordinates inside the grid at random at beginning of game
+    //set spot coordinates inside the grid at random at beginning of game
 
-	Position getRandomPosition(const char g[][SIZEX]);
-	Position playerPosition = getRandomPosition(maze);
+    Position       getRandomPosition(const char g[][SIZEX]);
+    const Position playerPosition = getRandomPosition(maze);
 
-	spot.x = playerPosition.x;
-	spot.y = playerPosition.y;
+    spot.x = playerPosition.x;
+    spot.y = playerPosition.y;
 }
 
 void setInitialMazeStructure(char maze[][SIZEX])
 {
-	//set the position of the walls in the maze
-	//initialise maze configuration
-	char initialMaze[SIZEY][SIZEX] //local array to store the maze structure
-		= {
-			{'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
-			{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
-			{'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'}
-		};
-	//with '#' for wall, ' ' for tunnel, etc. 
-	//copy into maze structure with appropriate symbols
-	for (int row(0); row < SIZEY; ++row)
-		for (int col(0); col < SIZEX; ++col)
-			switch (initialMaze[row][col])
-			{
-				//not a direct copy, in case the symbols used are changed
-			case '#': maze[row][col] = WALL;
-				break;
-			case ' ': maze[row][col] = TUNNEL;
-				break;
-			}
+    //set the position of the walls in the maze
+    //initialise maze configuration
+    char initialMaze[SIZEY][SIZEX] //local array to store the maze structure
+            = {
+                {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'},
+                {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', ' ', '#', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', ' ', '#', ' ', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', '#', '#', '#', ' ', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', ' ', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
+                {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'}
+            };
+    //with '#' for wall, ' ' for tunnel, etc. 
+    //copy into maze structure with appropriate symbols
+    for (int     row(0); row < SIZEY; ++row)
+        for (int col(0); col < SIZEX; ++col)
+            switch (initialMaze[row][col])
+            {
+                //not a direct copy, in case the symbols used are changed
+            case '#': maze[row][col] = WALL;
+                break;
+            case ' ': maze[row][col] = TUNNEL;
+                break;
+            }
 }
 
 //---------------------------------------------------------------------------
 //----- Update Game
 //---------------------------------------------------------------------------
 
-void updateGame(char grid[][SIZEX], const char maze[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int keyCode, string& mess)
+void updateGame(char       grid[][SIZEX],
+                const char maze[][SIZEX],
+                player&    spot,
+                mouse&     mouse,
+                pill&      pill,
+                const int  keyCode,
+                string&    mess)
 {
-	//update game
-	void updateGameData(const char g[][SIZEX], Player& s, Mouse& mo, Pill& p, int kc, string& ms);
-	void updateGrid(char g[][SIZEX], const char maze[][SIZEX], const Player& s, const Mouse& mouse, const Pill& pup);
-	updateGameData(grid, spot, mouse, pill, keyCode, mess); //move spot in required direction
-	updateGrid(grid, maze, spot, mouse, pill);              //update grid information
+    //update game
+    void updateGameData(const char g[][SIZEX],
+                        player&    s,
+                        ::mouse&   mo,
+                        ::pill&    p,
+                        int        kc,
+                        string&    ms);
+    void updateGrid(char           g[][SIZEX],
+                    const char     maze[][SIZEX],
+                    const player&  s,
+                    const ::mouse& mouse,
+                    const ::pill&  pup);
+    updateGameData(grid, spot, mouse, pill, keyCode, mess); //move spot in required direction
+    updateGrid(grid, maze, spot, mouse, pill);              //update grid information
 }
 
-void updateGameData(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int key, string& mess)
+void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pill, const int key, string& mess)
 {
-	//move spot in required direction
-	bool isArrowKey(int k);
-	void setKeyDirection(int k, int& dx, int& dy);
-	void movePlayer(Player& spot, int dy, int dx);
-	void setRandomItemPosition(const char g[][SIZEX], Item& item);
-	void player_collides_with_wall_in_invincible_mode(Player& spot, const int dx, const int dy);
-	void player_collides_with_mouse(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int dx, const int dy);
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-	assert (isArrowKey(key));
+    //move spot in required direction
+    bool isArrowKey(int                   k);
+    void setKeyDirection(int              k, int&           dx, int& dy);
+    void setRandomItemPosition(const char g[][SIZEX], item& item);
+    void showMessage(WORD                 backColour,
+                     WORD                 textColour,
+                     int                  x,
+                     int                  y,
+                     const string&        message);
+    assert (isArrowKey(key));
 
-	//reset message to blank
-	mess = "";
+    //reset message to blank
+    mess = "";
 
-	//calculate direction of movement for given key
-	int dx(0), dy(0);
-	setKeyDirection(key, dx, dy);
+    //calculate direction of movement for given key
+    int dx(0), dy(0);
+    setKeyDirection(key, dx, dy);
 
-    if(spot.inInvincibleMode)
+    spot.update();
+
+    //check new target position in grid and update game data (incl. spot coordinates) if move is possible
+    switch (g[spot.y + dy][spot.x + dx])
     {
-        if(spot.invincibleCountdown > 0)
-            spot.invincibleCountdown--;
-        else spot.inInvincibleMode = false;
-    }
-    spot.numberOfMoves++;
-
-	//check new target position in grid and update game data (incl. spot coordinates) if move is possible
-	switch (g[spot.y + dy][spot.x + dx])
-	{
-		//...depending on what's on the target position in grid...
-    case TAIL:
-        spot.alive = false;
+        //...depending on what's on the target position in grid...
+    case TAIL: spot.alive = false;
         break;
-	case TUNNEL: //can move
-		movePlayer(spot, dy, dx);
-		break;
-	case WALL: //hit a wall and stay there
-		//cout << '\a';	//beep the alarm
-		if (spot.inInvincibleMode)
-		{
-			player_collides_with_wall_in_invincible_mode(spot, dx, dy);
-		}
-		else {
-			spot.alive = false;
-		}
-		break;
-	case MOUSE:
-		player_collides_with_mouse(g, spot, mouse, pill, dx, dy);
-		break;
-	case PILL:
-        if(!pill.show)
-        {
-            movePlayer(spot, dy, dx);
-            break;
-        }
-		spot.maxSize = 4;
-		spot.inInvincibleMode = true;
-        spot.invincibleCountdown = 20;
-		pill.show = false;
-		movePlayer(spot, dy, dx);
-		break;
-	}
+    case TUNNEL: //can move
+        spot.move(dy, dx);
+        break;
+    case WALL: //hit a wall and stay there
+        //cout << '\a';	//beep the alarm
+        if (spot.inInvincibleMode) { spot.wrap_player(dy, dx); }
+        else { spot.alive = false; }
+        break;
+    case MOUSE: mouse.collide(g, spot, mouse, pill, dx, dy);
+        break;
+    case PILL: pill.collide(spot);
+        spot.move(dy, dx);
+        break;
+    }
 }
 
-void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const Player& spot, const Mouse& mouse, const Pill& pill)
+void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const player& spot, const mouse& mouse, const pill& pill)
 {
-	//update grid configuration after each move
-	void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
-	void placeItem(char g[][SIZEX], const Item& item);
-	void placePlayer(char g[][SIZEX], const Player& spot);
+    //update grid configuration after each move
+    void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
 
-	placeMaze(grid, maze); //reset the empty maze configuration into grid
-	placeItem(grid, mouse);
-	placeItem(grid, pill);
-	placePlayer(grid, spot); //set spot in grid
+    placeMaze(grid, maze); //reset the empty maze configuration into grid
+
+    mouse.place(grid);
+    pill.place(grid);
+    spot.place(grid);
 }
 
 Position getRandomPosition(const char grid[][SIZEX])
 {
-	bool validPosition(const char grid[][SIZEX], int x, int y);
+    bool validPosition(const char grid[][SIZEX], int x, int y);
 
-	int x, y;
-	bool positionEmpty = false;
+    int  x, y;
+    bool positionEmpty = false;
 
-	do
-	{
-		x = random(SIZEX - 2);
-		y = random(SIZEY - 2);
-		// positionEmpty = validPosition(grid, x, y);
-	}
-	while (!validPosition(grid, x, y));
+    do
+    {
+        x = random(SIZEX - 2);
+        y = random(SIZEY - 2);
+        // positionEmpty = validPosition(grid, x, y);
+    }
+    while (!validPosition(grid, x, y));
 
-	return {x, y};
+    return {x, y};
 }
 
-void setRandomItemPosition(const char grid[][SIZEX], Item& item)
+void setRandomItemPosition(const char grid[][SIZEX], item& item)
 {
-	Position getRandomPosition(const char g[][SIZEX]);
+    Position getRandomPosition(const char g[][SIZEX]);
 
-	Position itemPosition = getRandomPosition(grid);
-	item.x = itemPosition.x;
-	item.y = itemPosition.y;
+    const Position itemPosition = getRandomPosition(grid);
+    item.x                      = itemPosition.x;
+    item.y                      = itemPosition.y;
 }
 
-bool validPosition(const char grid[][SIZEX], int x, int y)
-{
-	return (grid[y][x] == TUNNEL);
-}
+bool validPosition(const char grid[][SIZEX], int x, int y) { return grid[y][x] == TUNNEL; }
 
 void placeMaze(char grid[][SIZEX], const char maze[][SIZEX])
 {
-	//reset the empty/fixed maze configuration into grid
-	for (int row(0); row < SIZEY; ++row)
-		for (int col(0); col < SIZEX; ++col)
-			grid[row][col] = maze[row][col];
-}
-
-void placePlayer(char g[][SIZEX], const Player& player)
-{
-	void placeItem(char g[][SIZEX], const Item& item);
-	placeItem(g, player);
-	for each (Item tail in player.tails)
-	{
-		placeItem(g, tail);
-	}
-}
-
-void placeItem(char g[][SIZEX], const Item& item)
-{
-	//place item at its new position in grid
-	g[item.y][item.x] = item.symbol;
+    //reset the empty/fixed maze configuration into grid
+    for (int     row(0); row < SIZEY; ++row)
+        for (int col(0); col < SIZEX; ++col)
+            grid[row][col] = maze[row][col];
 }
 
 void showGameOver()
 {
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    int getKeyPress();
+    int  getKeyPress();
 
     clrscr();
-
 
     showMessage(clBlack, clWhite, 0, 0, "Game over");
     showMessage(clBlack, clWhite, 0, 1, "Press return to continue");
 
     bool restart = false;
-    while (!restart) {
+    while (!restart)
+    {
         int newKey = getKeyPress(); //read in  selected key: arrow or letter command
-        if (newKey == '\r' || newKey == '\n') restart = true;
+        if (newKey == '\r' || newKey == '\n')
+            restart = true;
     }
-}
-
-//---------------------------------------------------------------------------
-//----- Player specific code
-//---------------------------------------------------------------------------
-
-void movePlayer(Player& spot, int dy, int dx)
-{
-    void teleportPlayer(Player& spot, int y, int x);
-    teleportPlayer(spot, spot.y + dy, spot.x + dx);
-}
-
-void teleportPlayer(Player& spot, int y, int x)
-{
-    while (spot.tails.size() > spot.maxSize - 1)
-    {
-        spot.tails.erase(spot.tails.begin());
-    }
-    spot.tails.emplace_back(spot.x, spot.y);
-    spot.y = y; //go in that Y direction
-    spot.x = x; //go in that X direction
-}
-
-void player_collides_with_mouse(const char g[][SIZEX], Player& spot, Mouse& mouse, Pill& pill, const int dx, const int dy)
-{
-    void setRandomItemPosition(const char g[][SIZEX], Item& item);
-    void movePlayer(Player& spot, int dy, int dx);
-    if (!spot.inCheatMode)
-    {
-        spot.maxSize += 2;
-        spot.mouseCount++;
-    }
-
-    setRandomItemPosition(g, mouse);
-    setRandomItemPosition(g, pill);
-    movePlayer(spot, dy, dx);
-
-    // every two mice caught, a power up pill spawns (check for that)
-    if (spot.mouseCount % 2 == 0)
-    {
-        //spot.mouseCount = 0;
-        setRandomItemPosition(g, pill);
-        pill.show = true;
-    }
-    else
-        pill.show = false;
-}
-
-void player_collides_with_wall_in_invincible_mode(Player& spot, const int dx, const int dy)
-{
-    void teleportPlayer(Player& s, int y, int x);
-
-    int new_x = spot.x + dx; // Store the current x and y values so that the usual method for
-    int new_y = spot.y + dy; // moving can be used meaning that the tail will move with the rest
-
-    if (new_x == 1) new_x = SIZEX - 2;      // Run through each possible of the 4 walls
-    else if (new_y == 1) new_y = SIZEY - 2; // and check if the player is 
-    else if (new_x == SIZEX - 1) new_x = 1; // colliding with them
-    else if (new_y == SIZEY - 1) new_y = 1; // If so move them to the opposite wall
-
-    teleportPlayer(spot, new_y, new_x);
 }
 
 //---------------------------------------------------------------------------
@@ -537,68 +371,57 @@ void player_collides_with_wall_in_invincible_mode(Player& spot, const int dx, co
 
 void setKeyDirection(const int key, int& dx, int& dy)
 {
-	//calculate direction indicated by key
-	bool isArrowKey(int k);
-	assert (isArrowKey(key));
-	switch (key) //...depending on the selected key...
-	{
-	case LEFT:   //when LEFT arrow pressed...
-		dx = -1; //decrease the X coordinate
-		dy = 0;
-		break;
-	case RIGHT:  //when RIGHT arrow pressed...
-		dx = +1; //increase the X coordinate
-		dy = 0;
-		break;
-	case UP: //when UP arrow pressed...
-		dx = 0;
-		dy = -1; // decrease the Y coordinate
-		break;
-	case DOWN: //when DOWN arrow pressed...
-		dx = 0;
-		dy = +1; // increase the Y coordinate
-		break;
-	}
+    //calculate direction indicated by key
+    bool isArrowKey(int k);
+    assert (isArrowKey(key));
+    switch (key) //...depending on the selected key...
+    {
+    case LEFT:   //when LEFT arrow pressed...
+        dx = -1; //decrease the X coordinate
+        dy = 0;
+        break;
+    case RIGHT:  //when RIGHT arrow pressed...
+        dx = +1; //increase the X coordinate
+        dy = 0;
+        break;
+    case UP: //when UP arrow pressed...
+        dx = 0;
+        dy = -1; // decrease the Y coordinate
+        break;
+    case DOWN: //when DOWN arrow pressed...
+        dx = 0;
+        dy = +1; // increase the Y coordinate
+        break;
+    }
 }
 
 int getKeyPress()
 {
-	//get key or command selected by user
-	//KEEP THIS FUNCTION AS GIVEN
-	int keyPressed;
-	keyPressed = _getch();    //read in the selected arrow key or command letter
-	while (keyPressed == 224) //ignore symbol following cursor key
-		keyPressed = _getch();
-	return keyPressed;
+    //get key or command selected by user
+    //KEEP THIS FUNCTION AS GIVEN
+    int keyPressed;
+    keyPressed = _getch();    //read in the selected arrow key or command letter
+    while (keyPressed == 224) //ignore symbol following cursor key
+        keyPressed = _getch();
+    return keyPressed;
 }
 
 bool isArrowKey(const int key)
 {
-	//check if the key pressed is an arrow key (also accept 'K', 'M', 'H' and 'P')
-	return (key == LEFT) || (key == RIGHT) || (key == UP) || (key == DOWN);
+    //check if the key pressed is an arrow key (also accept 'K', 'M', 'H' and 'P')
+    return (key == LEFT) || (key == RIGHT) || (key == UP) || (key == DOWN);
 }
 
 bool wantsToQuit(const int key)
 {
-	//check if the user wants to quit (when key is 'Q' or 'q')
-	return key == QUIT || key == tolower(QUIT);
+    //check if the user wants to quit (when key is 'Q' or 'q')
+    return key == QUIT || key == tolower(QUIT);
 }
 
 bool wantsToCheat(const int key)
 {
     //check if the user wants to quit (when key is 'Q' or 'q')
     return key == CHEAT || key == tolower(CHEAT);
-}
-
-void toggle_cheatmode(Player& spot)
-{
-	spot.inCheatMode = !spot.inCheatMode;
-	if (spot.inCheatMode)
-	{
-		cout << '\a' << '\a' << '\a';
-		spot.maxSize = 4;
-		spot.tails.clear();
-	}
 }
 
 bool wantsToSeeScoreboard(const int key)
@@ -609,44 +432,45 @@ bool wantsToSeeScoreboard(const int key)
 
 void showScoreboard()
 {
-    vector<Score> loadScores();
-    vector<Score> sortScores(vector<Score> scores);
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    string tostring(int x);
-    int getKeyPress();
+    void   showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    string tostring(int     x);
+    int    getKeyPress();
 
     clrscr();
-    vector<Score> scores = loadScores();
-    scores = sortScores(scores);
+    vector <score> scores = score::load_scores();
+    scores                = score::sort_scores(scores);
 
     showMessage(clDarkBlue, clBlue, 0, 0, "High scores");
     for (int i = 0; i <= 6; i++)
     {
         string score_msg;
 
-        if (scores.size() > i) score_msg = scores[i].name + ": " + tostring(scores[i].moves);
-        else score_msg = "anonymous: -1";
+        if (scores.size() > i)
+            score_msg = scores[i].name + ": " + tostring(scores[i].moves);
+        else
+            score_msg = "anonymous: -1";
         showMessage(clBlack, clWhite, 0, i, score_msg);
     }
 
-    bool restart = false;
-    while (!restart) {
-        int newKey = getKeyPress(); //read in  selected key: arrow or letter command
-        if (newKey == '\r' || newKey == '\n') restart = true;
+    int newKey;
+    do
+    {
+        newKey = getKeyPress(); //read in  selected key: arrow or letter command
     }
+    while (!(newKey == '\n' || newKey == '\r'));
 }
 
 bool askToloadSave()
 {
     void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    int getKeyPress();
+    int  getKeyPress();
 
     clrscr();
 
     showMessage(clBlack, clWhite, 0, 0, "Would you like to load a previous save?");
 
     bool selectionMade = false;
-    int index = 1;
+    int  index         = 1;
     while (!selectionMade)
     {
         showMessage(clBlack, clWhite, 0, index + 1, "> ");
@@ -658,90 +482,22 @@ bool askToloadSave()
         if (key == UP)
         {
             index--;
-            if (index < 0) index = 1;
+            if (index < 0)
+                index = 1;
         }
         else if (key == DOWN)
         {
             index++;
-            if (index > 1) index = 0;
+            if (index > 1)
+                index = 0;
         }
-        else if (key == RIGHT)
-        {
-            selectionMade = true;
-        }
-
+        else
+            if (key == RIGHT) { selectionMade = true; }
     }
     return index;
 }
 
-bool wantsToSave(const int key)
-{
-    return key == SAVE || key == tolower(SAVE);
-}
-
-//---------------------------------------------------------------------------
-//----- Scores
-//---------------------------------------------------------------------------
-
-vector<Score> loadScores()
-{
-    vector<string> split(const string& s, char splitChar);
-    bool compareScores(const Score scoreA, const Score scoreB);
-
-    vector<Score> scores;
-    string line;
-    ifstream score_file(SCOREFILE, std::ifstream::in);
-    if (score_file.is_open())
-    {
-        while (getline(score_file, line))
-        {
-            vector<string> components = split(line, '-');
-            scores.push_back({ components[0], stoi(components[1]) });
-        }
-        score_file.close();
-    }
-
-    return scores;
-}
-
-Score getHighScore()
-{
-    vector<Score> loadScores();
-
-    vector<Score> scores = loadScores();
-
-    Score highest_score = { "annon", 500 };
-    for (Score score : scores)
-    {
-        if (score.moves < highest_score.moves) highest_score = score;
-    }
-
-    return highest_score;
-}
-
-vector<Score> sortScores(vector<Score> scores)
-{
-    sort(scores.begin(), scores.end(), [](const Score& l, const Score& r) {
-        return l.moves > r.moves;
-    });
-
-    return scores;
-}
-
-void recordHighScore(string playerName, Player player)
-{
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    string tostring(int x);
-    if (!player.inCheatMode) {
-        ofstream out(SCOREFILE, fstream::app);
-        if (out.is_open()) {
-            string score_text = playerName + "-" + tostring(player.mouseCount);
-            out << score_text;
-            out << "\n";
-            out.close();
-        }
-    }
-}
+bool wantsToSave(const int key) { return key == SAVE || key == tolower(SAVE); }
 
 //---------------------------------------------------------------------------
 //----- Saving and loading game states
@@ -753,18 +509,18 @@ bool saveFileExists(string playerName)
     return f.good();
 }
 
-void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill)
+void loadSaveFile(string player_name, player& player, mouse& mouse, pill& pill)
 {
-    vector<string> split(const string& s, char splitChar);
+    vector <string> split(const string& s, char splitChar);
 
-    string objectLine;
-    string line;
+    string   objectLine;
+    string   line;
     ifstream score_file(player_name + SAVEFILEEXTENSION, std::ifstream::in);
     if (score_file.is_open())
     {
         while (getline(score_file, line))
         {
-            vector<string> components = split(line, ':');
+            vector <string> components = split(line, ':');
             if (components[0] == "player")
             {
                 if (components[1] == "x")
@@ -799,12 +555,13 @@ void loadSaveFile(string player_name, Player &player, Mouse &mouse, Pill &pill)
     }
 }
 
-void saveToFile(const string player_name, const Player player, const Mouse mouse, const Pill pill)
+void saveToFile(const string player_name, const player player, const mouse mouse, const pill pill)
 {
     string tostring(int x);
 
     ofstream out(player_name + SAVEFILEEXTENSION, fstream::trunc);
-    if (out.is_open()) {
+    if (out.is_open())
+    {
         out << "player:x:" << tostring(player.x) << "\n";
         out << "player:y:" << tostring(player.y) << "\n";
         out << "player:mouse_count:" << tostring(player.mouseCount) << "\n";
@@ -832,13 +589,13 @@ void getPlayerInformation(string& name)
     cin >> name;
 }
 
-void displayPlayerInformation(Player player, Score highest_score)
+void displayPlayerInformation(player player, score highest_score)
 {
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    string tostring(int x);
+    void   showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    string tostring(int     x);
 
     showMessage(clWhite, clBlack, 40, 7, "Score: " + tostring(player.numberOfMoves));
-    showMessage(clWhite, clBlack, 40, 8, tostring(player.mouseCount) +" out of "+tostring(MAXSCORE));
+    showMessage(clWhite, clBlack, 40, 8, tostring(player.mouseCount) + " out of " + tostring(MAXSCORE));
     showMessage(clWhite, clBlack, 40, 9, "High score");
     showMessage(clWhite, clBlack, 40, 10, highest_score.name + ": " + tostring(highest_score.moves));
 }
@@ -849,119 +606,117 @@ void displayPlayerInformation(Player player, Score highest_score)
 
 string tostring(int x)
 {
-	//convert an integer to a string
-	std::ostringstream os;
-	os << x;
-	return os.str();
+    //convert an integer to a string
+    std::ostringstream os;
+    os << x;
+    return os.str();
 }
 
 string tostring(char x)
 {
-	//convert a char to a string
-	std::ostringstream os;
-	os << x;
-	return os.str();
+    //convert a char to a string
+    std::ostringstream os;
+    os << x;
+    return os.str();
 }
 
 void showMessage(const WORD backColour, const WORD textColour, int x, int y, const string& message)
 {
-	//display a string using specified colour at a given position 
-	gotoxy(x, y);
-	selectBackColour(backColour);
-	selectTextColour(textColour);
-	cout << message + string(40 - message.length(), ' ');
+    //display a string using specified colour at a given position 
+    gotoxy(x, y);
+    selectBackColour(backColour);
+    selectTextColour(textColour);
+    cout << message + string(40 - message.length(), ' ');
 }
 
-void renderGame(const char g[][SIZEX], const string& mess, const Player& spot, const Pill& pill)
+void renderGame(const char g[][SIZEX], const string& mess, const player& spot, const pill& pill)
 {
-	//display game title, messages, maze, spot and other items on screen
-	string tostring(char x);
-	string tostring(int x);
-	void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-	void paintGrid(const char g[][SIZEX], const Player& spot, const Pill& pup);
+    //display game title, messages, maze, spot and other items on screen
+    string tostring(char        x);
+    string tostring(int         x);
+    void   showMessage(WORD     backColour, WORD          textColour, int     x, int y, const string& message);
+    void   paintGrid(const char g[][SIZEX], const player& spot, const ::pill& pup);
 
-	//display game title
-	showMessage(clBlack, clGreen, 0, 0, "Snake Game");
+    //display game title
+    showMessage(clBlack, clGreen, 0, 0, "Snake Game");
 
     showMessage(clWhite, clRed, 40, 0, "FoP Task 1c - " + getTime());
-	showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b8022088)");
-	showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
-	//display menu options available
-	showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
-	showMessage(clRed, clYellow, 40, 5, "TO QUIT - PRESS 'Q'           ");
+    showMessage(clWhite, clRed, 40, 1, "SE2 - Conor Grocock (b8022088)");
+    showMessage(clWhite, clRed, 40, 2, "SE2 - Rae Hewitt (b8014125)");
+    //display menu options available
+    showMessage(clRed, clYellow, 40, 4, "TO MOVE - USE KEYBOARD ARROWS ");
+    showMessage(clRed, clYellow, 40, 5, "TO QUIT - PRESS 'Q'           ");
 
+    if (spot.inCheatMode)
+        showMessage(clRed, clYellow, 40, 14, "CHEAT MODE ON");
+    else
+        showMessage(clBlack, clYellow, 40, 14, "");
+    if (spot.inInvincibleMode)
+        showMessage(clRed, clYellow, 40, 15, "INVINCIBLE SNAKE");
+    else
+        showMessage(clBlack, clYellow, 40, 15, "");
 
-	if (spot.inCheatMode)
-		showMessage(clRed, clYellow, 40, 14, "CHEAT MODE ON");
-	else
-		showMessage(clBlack, clYellow, 40, 14, "");
-	if (spot.inInvincibleMode)
-		showMessage(clRed, clYellow, 40, 15, "INVINCIBLE SNAKE");
-	else
-		showMessage(clBlack, clYellow, 40, 15, "");
+    //print auxiliary messages if any
+    showMessage(clBlack, clWhite, 40, 11, mess); //display current message
 
-
-	//print auxiliary messages if any
-	showMessage(clBlack, clWhite, 40, 11, mess); //display current message
-
-	//display grid contents
-	paintGrid(g, spot, pill);
+    //display grid contents
+    paintGrid(g, spot, pill);
 }
 
-void paintGrid(const char g[][SIZEX], const Player& player, const Pill& pill)
+void paintGrid(const char g[][SIZEX], const player& player, const pill& pill)
 {
-	//display grid content on screen
-	selectBackColour(clBlack);
-	selectTextColour(clWhite);
-	gotoxy(0, 2);
-	for (int row(0); row < SIZEY; ++row)
-	{
-		for (int col(0); col < SIZEX; ++col)
-		{
-			char cell = g[row][col];
-			if (cell == SPOT)
-			{
-				//check for snake 
-				if (player.inInvincibleMode)
-					selectTextColour(clGreen);   //if rendering the snake make it green
-				else selectTextColour(clYellow); //if rendering the snake make it green
-			}
-			else if (cell == TAIL)
-			{
-				if (player.inInvincibleMode) selectTextColour(clYellow);
-				else selectTextColour(clGreen);
-			}
-			else if (cell == PILL)
-				selectTextColour(clRed);
-			else if (cell == WALL)
-				selectTextColour(clGrey);
-			else
-				selectTextColour(clWhite); //any other cell is white
-
-			if (cell == PILL && pill.show == false)
-				cout << TUNNEL;
-			else
-				cout << cell; //output cell content
-		}
-		cout << endl;
-	}
-}
-
-vector<string> split(const string& s, char splitChar)
-{
-    vector<string> components;
-    string component;
-    istringstream componentStream(s);
-    while (getline(componentStream, component, splitChar))
+    //display grid content on screen
+    selectBackColour(clBlack);
+    selectTextColour(clWhite);
+    gotoxy(0, 2);
+    for (int row(0); row < SIZEY; ++row)
     {
-        components.push_back(component);
+        for (int col(0); col < SIZEX; ++col)
+        {
+            char cell = g[row][col];
+            if (cell == SPOT)
+            {
+                //check for snake 
+                if (player.inInvincibleMode)
+                    selectTextColour(clGreen); //if rendering the snake make it green
+                else
+                    selectTextColour(clYellow); //if rendering the snake make it green
+            }
+            else if (cell == TAIL)
+            {
+                if (player.inInvincibleMode)
+                    selectTextColour(clYellow);
+                else
+                    selectTextColour(clGreen);
+            }
+            else if (cell == PILL)
+                selectTextColour(clRed);
+            else if (cell == WALL)
+                selectTextColour(clGrey);
+            else
+                selectTextColour(clWhite); //any other cell is white
+
+            if (cell == PILL && pill.show == false)
+                cout << TUNNEL;
+            else
+                cout << cell; //output cell content
+        }
+        cout << endl;
     }
+}
+
+vector <string> split(const string& s, char splitChar)
+{
+    vector <string> components;
+    string          component;
+    istringstream   componentStream(s);
+    while (getline(componentStream, component, splitChar)) { components.push_back(component); }
     return components;
 }
 
 void endProgram()
 {
-	void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-	showMessage(clRed, clYellow, 40, 8, "Goodbye!");
-	//system("pause");	//hold output screen until a keyboard key is hit
+    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
+    showMessage(clRed, clYellow, 40, 8, "Goodbye!");
+    //system("pause");	//hold output screen until a keyboard key is hit
 }
