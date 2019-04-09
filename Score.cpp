@@ -25,14 +25,14 @@ score score::get_high_score()
 {
     std::vector <score> scores = load_scores();
 
-    score      highest_score = {"annon", 500};
+    score      best_score = {"annon", 500};
     for (score score : scores)
     {
-        if (score.moves < highest_score.moves)
-            highest_score = score;
+        if (score.moves < best_score.moves)
+            best_score = score;
     }
 
-    return highest_score;
+    return best_score;
 }
 
 std::vector <score> score::sort_scores(std::vector <score> scores)

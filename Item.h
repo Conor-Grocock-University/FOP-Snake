@@ -8,7 +8,7 @@ struct item
 
     item(int x, int y, char symbol);
 
-    void place(char g[][SIZEX]) const;
+    virtual void place(char g[][SIZEX]) const;
 
     virtual void teleport(int dy, int dx);
     virtual void move(int     dy, int dx);

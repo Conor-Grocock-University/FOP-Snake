@@ -19,7 +19,6 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
-#include <algorithm>
 
 #include "Player.h"
 #include "Mouse.h"
