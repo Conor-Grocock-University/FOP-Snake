@@ -2,6 +2,7 @@
 #include "Item.h"
 #include "Pill.h"
 #include "Player.h"
+#include "Mongoose.h"
 
 const char MOUSE('M'); //mouse
 struct mouse: item
@@ -12,6 +13,7 @@ struct mouse: item
                         player&    spot,
                         mouse&     mouse,
                         pill&      pill,
+						mongoose&  mongoose,
                         int        dx,
                         int        dy);
 };

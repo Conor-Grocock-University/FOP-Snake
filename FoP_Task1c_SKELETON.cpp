@@ -22,6 +22,7 @@
 
 #include "Player.h"
 #include "Mouse.h"
+#include "Mongoose.h"
 #include "Pill.h"
 #include "Score.h"
 #include "Globals.h"

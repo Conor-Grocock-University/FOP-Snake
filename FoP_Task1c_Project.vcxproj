@@ -22,6 +22,7 @@
     <ClCompile Include="ConsoleUtils.cpp" />
     <ClCompile Include="FoP_Task1c_SKELETON.cpp" />
     <ClCompile Include="Item.cpp" />
+    <ClCompile Include="Mongoose.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="Pill.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -34,6 +35,7 @@
     <ClInclude Include="ConsoleUtils.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="Mongoose.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="Pill.h" />
     <ClInclude Include="Player.h" />

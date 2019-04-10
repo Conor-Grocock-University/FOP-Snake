@@ -29,5 +29,4 @@ struct player: item
     void invincibility_countdown();
 
     void player::update();
-    void wrap_player();
 };
