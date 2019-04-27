@@ -33,6 +33,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConsoleUtils.h" />
+    <ClInclude Include="FoP_Task1c_SKELETON.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="Mongoose.h" />

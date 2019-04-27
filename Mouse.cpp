@@ -6,7 +6,6 @@ bool mouse::collide(const char g[][SIZEX],
                     player&    spot,
                     mouse&     mouse,
                     pill&      pill,
-					mongoose&  mongoose,
                     int        dx,
                     int        dy)
 {
@@ -31,14 +30,6 @@ bool mouse::collide(const char g[][SIZEX],
     else
         pill.show = false;
 
-	// every three mice caught, a mongoose spawns (check for that)
-	if (spot.mouseCount >= 3)
-	{
-		mongoose.walk();
-		mongoose.show = true;
-	}
-	else
-		mongoose.show = false;
 
     return false;
 }

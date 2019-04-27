@@ -6,87 +6,25 @@
 
 //Go to 'View > Task List' menu to open the 'Task List' pane listing the initial amendments needed to this program
 
-//---------------------------------------------------------------------------
-//----- include libraries
-//---------------------------------------------------------------------------
-
-//include standard libraries
-#include <iostream>
-#include <iomanip>
-#include <conio.h>
-#include <cassert>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <fstream>
-
-#include "Player.h"
-#include "Mouse.h"
-#include "Mongoose.h"
-#include "Pill.h"
-#include "Score.h"
-#include "Globals.h"
-
-#include "RandomUtils.h"    //for seed, random
-#include "ConsoleUtils.h"	//for clrscr, gotoxy, etc.
-#include "TimeUtils.h"		//for getSystemTime, timeToString, etc.
-
-using namespace std;
-
-//---------------------------------------------------------------------------
-//----- define constants
-//---------------------------------------------------------------------------
-
-#pragma region Structs
-
-struct Position
-{
-    int x, y;
-};
-
-#pragma endregion
+#include "FoP_Task1c_SKELETON.h"
 
 //---------------------------------------------------------------------------
 //----- run game
 //---------------------------------------------------------------------------
 
+
 int main()
 {
-    //function declarations (prototypes)
-    void initialiseGame(char             g[][SIZEX], char m[][SIZEX], player& spot, mouse& mouse, pill& pill);
-    void getPlayerInformation(string&    name);
-    void displayPlayerInformation(player player, score             highest_score);
-    void renderGame(const char           g[][SIZEX], const string& mess, const player& spot, const pill& pill);
-    void updateGame(char                 g[][SIZEX],
-                    const char           m[][SIZEX],
-                    player&              s,
-                    mouse&               mouse,
-                    pill&                pill,
-                    int                  kc,
-                    string&              mess);
-    void showScoreboard();
-    void endProgram();
-    void showGameOver();
-    void saveToFile(string        player_name, player  player, mouse  mouse, pill  pill);
-    void loadSaveFile(string      player_name, player& player, mouse& mouse, pill& pill);
-    bool saveFileExists(string    playerName);
-    bool wantsToQuit(int          key);
-    bool wantsToCheat(int         key);
-    bool wantsToSeeScoreboard(int key);
-    bool wantsToSave(int          key);
-    bool isArrowKey(int           key);
-    bool askToloadSave();
-    int  getKeyPress();
-
     //local variable declarations 
     char   grid[SIZEY][SIZEX];        //grid for display
     char   maze[SIZEY][SIZEX];        //structure of the maze
     string message("LET'S START..."); //current message to player
     string playerName;                // Players chosen name
 
-    player spot  = {0, 0}; //spot's position
-    mouse  mouse = {3, 3}; //mouse's position
-    pill   pill  = {0, 0}; //power up pill's position
+    player   spot     = {0, 0}; //spot's position
+    mouse    mouse    = {3, 3}; //mouse's position
+    pill     pill     = {0, 0}; //power up pill's position
+    mongoose mongoose = {0, 0};
 
     //action...
     seed(); //seed the random number generator
@@ -103,11 +41,12 @@ int main()
 
         const score highest_score = score::get_high_score(); // Get the current highest score from a file, 
 
-        spot  = {0, 0}; //spot's position
-        mouse = {3, 3}; //mouse's position
-        pill  = {0, 0}; //power up pill's position
+        spot = { 0, 0 }; //spot's position
+        mouse = { 3, 3 }; //mouse's position
+        pill = { 0, 0 }; //power up pill's position    
+        mongoose = { 0, 0 };
 
-        initialiseGame(grid, maze, spot, mouse, pill); //initialise grid (incl. walls and spot)
+        initialiseGame(grid, maze, spot, mouse, pill, mongoose); //initialise grid (incl. walls and spot)
 
         if (saveFileExists(playerName)) // Run a check to see if a save file exists
         {
@@ -126,31 +65,10 @@ int main()
             displayPlayerInformation(spot, highest_score); // Show the score information on the side of the screen
 
             Sleep(GAMEDELAY);
-            if (_kbhit())
-            {
-                // Detect if any key has been pressed
-                // Only update the main key variable if the key is for movement
-                // Otherwise run the relevent function. This mean that game play 
-                // is not interrupted by keys such as quit
-                int newKey = getKeyPress(); //read in  selected key: arrow or letter command
-
-                if (isArrowKey(newKey))
-                    // If the key is an arrow key, set the key variable, so it can be used to direct movement
-                    key = newKey;
-                else if (wantsToQuit(newKey))                  //if the key is a quit key
-                    endProgram();                              //end the game
-                else if (wantsToCheat(newKey))                 // If the key is the cheat key
-                    spot.toggle_cheatmode();                   // Enable cheat mode
-                else if (wantsToSeeScoreboard(newKey))         // If the key is the scoreboard key
-                    showScoreboard();                          // Clear the screen and show the scoreboard
-                else if (wantsToSave(newKey))                  // IF the key is the save key
-                    saveToFile(playerName, spot, mouse, pill); // Save the current game to a file
-                else
-                    message = "INVALID KEY!"; //set 'Invalid key' message
-            }
+            handle_input(message, playerName, spot, mouse, pill, key);
 
             if (isArrowKey(key)) // Update the game if the current key is an arrow key, if not, re run the loop
-                updateGame(grid, maze, spot, mouse, pill, key, message);
+                updateGame(grid, maze, spot, mouse, pill, mongoose, key, message);
         }
 
         showGameOver();
@@ -165,22 +83,13 @@ int main()
 //----- initialise game state
 //---------------------------------------------------------------------------
 
-void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], player& spot, mouse& mouse, pill& pill)
+void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], player& spot, mouse& mouse, pill& pill, mongoose& mongoose)
 {
-    //initialise grid and place spot in middle
-    void setInitialMazeStructure(char     maze[][SIZEX]);
-    void setRandomItemPosition(const char g[][SIZEX], item& item);
-    void updateGrid(char                  g[][SIZEX],
-                    const char            m[][SIZEX],
-                    const player&         i,
-                    const ::mouse&        n,
-                    const ::pill&         p);
-
-    setInitialMazeStructure(maze);             //initialise maze
-    setRandomItemPosition(maze, spot);         // Place the player in a random position on the grid
-    setRandomItemPosition(maze, mouse);        // Place the mouse in a random position
-    setRandomItemPosition(maze, pill);         // Place the pill in a random position
-    updateGrid(grid, maze, spot, mouse, pill); //prepare grid
+    setInitialMazeStructure(maze);                       //initialise maze
+    setRandomItemPosition(maze, spot);                   // Place the player in a random position on the grid
+    setRandomItemPosition(maze, mouse);                  // Place the mouse in a random position
+    setRandomItemPosition(maze, pill);                   // Place the pill in a random position
+    updateGrid(grid, maze, spot, mouse, pill, mongoose); //prepare grid
 }
 
 void setSpotInitialCoordinates(player& spot, const char maze[][SIZEX])
@@ -211,6 +120,7 @@ void setInitialMazeStructure(char maze[][SIZEX])
                 {'#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#'},
                 {'#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'}
             };
+
     //with '#' for wall, ' ' for tunnel, etc. 
     //copy into maze structure with appropriate symbols
     for (int     row(0); row < SIZEY; ++row)
@@ -229,42 +139,28 @@ void setInitialMazeStructure(char maze[][SIZEX])
 //----- Update Game
 //---------------------------------------------------------------------------
 
+
+
 void updateGame(char       grid[][SIZEX],
                 const char maze[][SIZEX],
                 player&    spot,
                 mouse&     mouse,
                 pill&      pill,
+                mongoose   mongoose,
                 const int  keyCode,
                 string&    mess)
 {
     //update game
-    void updateGameData(const char g[][SIZEX],
-                        player&    s,
-                        ::mouse&   mo,
-                        ::pill&    p,
-                        int        kc,
-                        string&    ms);
-    void updateGrid(char           g[][SIZEX],
-                    const char     maze[][SIZEX],
-                    const player&  s,
-                    const ::mouse& mouse,
-                    const ::pill&  pup);
-    updateGameData(grid, spot, mouse, pill, keyCode, mess); //move spot in required direction
-    updateGrid(grid, maze, spot, mouse, pill);              //update grid information
+    updateGameData(grid, spot, mouse, pill, mongoose, keyCode, mess); //move spot in required direction
+    updateGrid(grid, maze, spot, mouse, pill, mongoose);              //update grid information
 }
 
-void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pill, const int key, string& mess)
+void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pill, mongoose& mongoose, const int key,
+                    string&    mess)
 {
     //move spot in required direction
-    bool isArrowKey(int                   k);
-    void setKeyDirection(int              k, int&           dx, int& dy);
-    void setRandomItemPosition(const char g[][SIZEX], item& item);
-    void showMessage(WORD                 backColour,
-                     WORD                 textColour,
-                     int                  x,
-                     int                  y,
-                     const string&        message);
-    assert (isArrowKey(key));
+
+    assert(isArrowKey(key));
 
     //reset message to blank
     mess = "";
@@ -274,6 +170,8 @@ void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pil
     setKeyDirection(key, dx, dy);
 
     spot.update();
+
+    mongoose.update(spot);
 
     //check new target position in grid and update game data (incl. spot coordinates) if move is possible
     switch (g[spot.y + dy][spot.x + dx])
@@ -297,17 +195,45 @@ void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pil
     }
 }
 
-void updateGrid(char grid[][SIZEX], const char maze[][SIZEX], const player& spot, const mouse& mouse, const pill& pill)
+void updateGrid(char           grid[][SIZEX], const char maze[][SIZEX], const player spot, const mouse mouse,
+                const pill     pill,
+                const mongoose mongoose)
 {
-    //update grid configuration after each move
-    void placeMaze(char g[][SIZEX], const char b[][SIZEX]);
-
     placeMaze(grid, maze); //reset the empty maze configuration into grid
 
     mouse.place(grid);
     pill.place(grid);
     spot.place(grid);
+    mongoose.place(grid);
 }
+
+
+void handle_input(string& message, string playerName, player spot, mouse mouse, pill pill, int& key)
+{
+    if (_kbhit())
+    {
+        // Detect if any key has been pressed
+        // Only update the main key variable if the key is for movement
+        // Otherwise run the relevent function. This mean that game play 
+        // is not interrupted by keys such as quit
+        int newKey = getKeyPress(); //read in  selected key: arrow or letter command
+
+        if (isArrowKey(newKey))
+            // If the key is an arrow key, set the key variable, so it can be used to direct movement
+            key = newKey;
+        else if (wantsToQuit(newKey))                  //if the key is a quit key
+            endProgram();                              //end the game
+        else if (wantsToCheat(newKey))                 // If the key is the cheat key
+            spot.toggle_cheatmode();                   // Enable cheat mode
+        else if (wantsToSeeScoreboard(newKey))         // If the key is the scoreboard key
+            showScoreboard();                          // Clear the screen and show the scoreboard
+        else if (wantsToSave(newKey))                  // IF the key is the save key
+            saveToFile(playerName, spot, mouse, pill); // Save the current game to a file
+        else
+            message = "INVALID KEY!"; //set 'Invalid key' message
+    }
+}
+
 
 Position getRandomPosition(const char grid[][SIZEX])
 {
@@ -329,14 +255,13 @@ Position getRandomPosition(const char grid[][SIZEX])
 
 void setRandomItemPosition(const char grid[][SIZEX], item& item)
 {
-    Position getRandomPosition(const char g[][SIZEX]);
-
     const Position itemPosition = getRandomPosition(grid);
     item.x                      = itemPosition.x;
     item.y                      = itemPosition.y;
 }
 
-bool validPosition(const char grid[][SIZEX], int x, int y) { return grid[y][x] == TUNNEL; }
+bool validPosition(const char grid[][SIZEX], int x, int y)
+{ return grid[y][x] == TUNNEL; }
 
 void placeMaze(char grid[][SIZEX], const char maze[][SIZEX])
 {
@@ -348,9 +273,6 @@ void placeMaze(char grid[][SIZEX], const char maze[][SIZEX])
 
 void showGameOver()
 {
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    int  getKeyPress();
-
     clrscr();
 
     showMessage(clBlack, clWhite, 0, 0, "Game over");
@@ -371,9 +293,9 @@ void showGameOver()
 
 void setKeyDirection(const int key, int& dx, int& dy)
 {
+    assert(isArrowKey(key));
+
     //calculate direction indicated by key
-    bool isArrowKey(int k);
-    assert (isArrowKey(key));
     switch (key) //...depending on the selected key...
     {
     case LEFT:   //when LEFT arrow pressed...
@@ -432,10 +354,6 @@ bool wantsToSeeScoreboard(const int key)
 
 void showScoreboard()
 {
-    void   showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    string tostring(int     x);
-    int    getKeyPress();
-
     clrscr();
     vector <score> scores = score::load_scores();
     scores                = score::sort_scores(scores);
@@ -462,9 +380,6 @@ void showScoreboard()
 
 bool askToloadSave()
 {
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    int  getKeyPress();
-
     clrscr();
 
     showMessage(clBlack, clWhite, 0, 0, "Would you like to load a previous save?");
@@ -505,14 +420,12 @@ bool wantsToSave(const int key) { return key == SAVE || key == tolower(SAVE); }
 
 bool saveFileExists(string playerName)
 {
-    ifstream f(playerName + SAVEFILEEXTENSION);
-    return f.good();
+    ifstream file(playerName + SAVEFILEEXTENSION);
+    return file.good();
 }
 
 void loadSaveFile(string player_name, player& player, mouse& mouse, pill& pill)
 {
-    vector <string> split(const string& s, char splitChar);
-
     string   objectLine;
     string   line;
     ifstream score_file(player_name + SAVEFILEEXTENSION, std::ifstream::in);
@@ -557,8 +470,6 @@ void loadSaveFile(string player_name, player& player, mouse& mouse, pill& pill)
 
 void saveToFile(const string player_name, const player player, const mouse mouse, const pill pill)
 {
-    string tostring(int x);
-
     ofstream out(player_name + SAVEFILEEXTENSION, fstream::trunc);
     if (out.is_open())
     {
@@ -591,9 +502,6 @@ void getPlayerInformation(string& name)
 
 void displayPlayerInformation(player player, score highest_score)
 {
-    void   showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
-    string tostring(int     x);
-
     showMessage(clWhite, clBlack, 40, 7, "Score: " + tostring(player.numberOfMoves));
     showMessage(clWhite, clBlack, 40, 8, tostring(player.mouseCount) + " out of " + tostring(MAXSCORE));
     showMessage(clWhite, clBlack, 40, 9, "High score");
@@ -631,12 +539,6 @@ void showMessage(const WORD backColour, const WORD textColour, int x, int y, con
 
 void renderGame(const char g[][SIZEX], const string& mess, const player& spot, const pill& pill)
 {
-    //display game title, messages, maze, spot and other items on screen
-    string tostring(char        x);
-    string tostring(int         x);
-    void   showMessage(WORD     backColour, WORD          textColour, int     x, int y, const string& message);
-    void   paintGrid(const char g[][SIZEX], const player& spot, const ::pill& pup);
-
     //display game title
     showMessage(clBlack, clGreen, 0, 0, "Snake Game");
 
@@ -716,7 +618,6 @@ vector <string> split(const string& s, char splitChar)
 
 void endProgram()
 {
-    void showMessage(WORD backColour, WORD textColour, int x, int y, const string& message);
     showMessage(clRed, clYellow, 40, 8, "Goodbye!");
     //system("pause");	//hold output screen until a keyboard key is hit
 }

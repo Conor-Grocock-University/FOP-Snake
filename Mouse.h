@@ -4,16 +4,10 @@
 #include "Player.h"
 #include "Mongoose.h"
 
-const char MOUSE('M'); //mouse
+const char MOUSE('*'); //mouse
 struct mouse: item
 {
     mouse(int x, int y);
 
-    bool mouse::collide(const char g[][SIZEX],
-                        player&    spot,
-                        mouse&     mouse,
-                        pill&      pill,
-						mongoose&  mongoose,
-                        int        dx,
-                        int        dy);
+    bool collide(const char g[][SIZEX], player & spot, mouse & mouse, pill & pill, int dx, int dy);
 };
