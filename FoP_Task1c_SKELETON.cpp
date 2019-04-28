@@ -578,12 +578,26 @@ void paintGrid(const char g[][SIZEX], const player& player, const pill& pill)
             }
             else if (cell == PILL)
                 selectTextColour(clRed);
+            else if (cell == MONGOOSE)
+                switch(random(3))
+                {
+                case 1:
+                    selectTextColour(clBlue);
+                    break;
+                case 2:
+                    selectTextColour(clCyan);
+                    break;
+                case 3:
+                    selectTextColour(clGreen);
+                    break;
+
+                }
             else if (cell == WALL)
                 selectTextColour(clGrey);
             else
                 selectTextColour(clWhite); //any other cell is white
 
-            if (cell == PILL && pill.show == false)
+            if (cell == PILL && !pill.show)
                 cout << TUNNEL;
             else
                 cout << cell; //output cell content

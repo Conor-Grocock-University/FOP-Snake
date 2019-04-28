@@ -2,14 +2,12 @@
 
 Position getRandomPosition(const char grid[][SIZEX])
 {
-    int  x, y;
-    bool positionEmpty = false;
+    int x, y;
 
     do
     {
         x = random(SIZEX - 2);
         y = random(SIZEY - 2);
-        // positionEmpty = validPosition(grid, x, y);
     } while (!validPosition(grid, x, y));
 
     return { x, y };
