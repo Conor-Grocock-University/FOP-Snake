@@ -52,8 +52,8 @@ int main()
         {
             if (askToloadSave()) // Ask if the player wants to load the save file
             {
-                loadSaveFile(playerName, spot, mouse, pill);
-                // Run the function to load the data from the save file into the 3 'actors'
+                loadSaveFile(playerName, spot, mouse, pill); // Run the function to load the data from the save file into the 3 'actors'
+                renderGame(grid, message, spot, pill); //Render the saved game
             }
         }
         clrscr(); // Clear the screen before the game begins
@@ -61,14 +61,15 @@ int main()
 
         while (spot.alive && spot.mouseCount < MAXSCORE && !wantsToQuit(key))
         {
-            renderGame(grid, message, spot, pill);         //display game info, modified grid and messages
-            displayPlayerInformation(spot, highest_score); // Show the score information on the side of the screen
-
             Sleep(GAMEDELAY);
+
             handle_input(message, playerName, spot, mouse, pill, key);
 
             if (isArrowKey(key)) // Update the game if the current key is an arrow key, if not, re run the loop
                 updateGame(grid, maze, spot, mouse, pill, mongoose, key, message);
+
+            renderGame(grid, message, spot, pill);         //display game info, modified grid and messages
+            displayPlayerInformation(spot, highest_score); // Show the score information on the side of the screen
         }
 
         showGameOver();
@@ -89,14 +90,13 @@ void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], player& spot, mouse&
     setRandomItemPosition(maze, spot);                   // Place the player in a random position on the grid
     setRandomItemPosition(maze, mouse);                  // Place the mouse in a random position
     setRandomItemPosition(maze, pill);                   // Place the pill in a random position
+    setRandomItemPosition(maze, mongoose);               // Place the mongoose in a random position
     updateGrid(grid, maze, spot, mouse, pill, mongoose); //prepare grid
 }
 
 void setSpotInitialCoordinates(player& spot, const char maze[][SIZEX])
 {
     //set spot coordinates inside the grid at random at beginning of game
-
-    Position       getRandomPosition(const char g[][SIZEX]);
     const Position playerPosition = getRandomPosition(maze);
 
     spot.x = playerPosition.x;
@@ -139,8 +139,6 @@ void setInitialMazeStructure(char maze[][SIZEX])
 //----- Update Game
 //---------------------------------------------------------------------------
 
-
-
 void updateGame(char       grid[][SIZEX],
                 const char maze[][SIZEX],
                 player&    spot,
@@ -170,8 +168,7 @@ void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pil
     setKeyDirection(key, dx, dy);
 
     spot.update();
-
-    mongoose.update(spot);
+    mongoose.update(g, spot);
 
     //check new target position in grid and update game data (incl. spot coordinates) if move is possible
     switch (g[spot.y + dy][spot.x + dx])
@@ -192,12 +189,13 @@ void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pil
     case PILL: pill.collide(spot);
         spot.move(dy, dx);
         break;
+    case MONGOOSE:
+        spot.alive = false;
+        break;
     }
 }
 
-void updateGrid(char           grid[][SIZEX], const char maze[][SIZEX], const player spot, const mouse mouse,
-                const pill     pill,
-                const mongoose mongoose)
+void updateGrid(char           grid[][SIZEX], const char maze[][SIZEX], const player spot, const mouse mouse, const pill pill, const mongoose mongoose)
 {
     placeMaze(grid, maze); //reset the empty maze configuration into grid
 
@@ -234,34 +232,6 @@ void handle_input(string& message, string playerName, player spot, mouse mouse, 
     }
 }
 
-
-Position getRandomPosition(const char grid[][SIZEX])
-{
-    bool validPosition(const char grid[][SIZEX], int x, int y);
-
-    int  x, y;
-    bool positionEmpty = false;
-
-    do
-    {
-        x = random(SIZEX - 2);
-        y = random(SIZEY - 2);
-        // positionEmpty = validPosition(grid, x, y);
-    }
-    while (!validPosition(grid, x, y));
-
-    return {x, y};
-}
-
-void setRandomItemPosition(const char grid[][SIZEX], item& item)
-{
-    const Position itemPosition = getRandomPosition(grid);
-    item.x                      = itemPosition.x;
-    item.y                      = itemPosition.y;
-}
-
-bool validPosition(const char grid[][SIZEX], int x, int y)
-{ return grid[y][x] == TUNNEL; }
 
 void placeMaze(char grid[][SIZEX], const char maze[][SIZEX])
 {
@@ -378,27 +348,31 @@ void showScoreboard()
     while (!(newKey == '\n' || newKey == '\r'));
 }
 
-bool askToloadSave()
-{
-    clrscr();
-
-    showMessage(clBlack, clWhite, 0, 0, "Would you like to load a previous save?");
-
+int show_menu(const string question, vector<string> options) {
     bool selectionMade = false;
-    int  index         = 1;
+    int index = 0;
+
+    showMessage(clBlack, clWhite, 0, 0, question);
     while (!selectionMade)
     {
+        for (int i = 0; i < options.size(); i++)
+        {
+            showMessage(clBlack, clWhite, 0, i + 1, "  ");
+        }
+
         showMessage(clBlack, clWhite, 0, index + 1, "> ");
-        showMessage(clBlack, clWhite, 0, 2 - index, " ");
-        showMessage(clBlack, clWhite, 10, 1, "No");
-        showMessage(clBlack, clWhite, 10, 2, "Yes");
+
+        for (int i = 0; i < options.size(); i++)
+        {
+            showMessage(clBlack, clWhite, 10, i+1, options[i]);
+        }
 
         const int key = getKeyPress();
         if (key == UP)
         {
             index--;
             if (index < 0)
-                index = 1;
+                index = 0;
         }
         else if (key == DOWN)
         {
@@ -409,7 +383,18 @@ bool askToloadSave()
         else
             if (key == RIGHT) { selectionMade = true; }
     }
+
     return index;
+}
+
+bool askToloadSave()
+{
+    clrscr();
+    vector<string> items;
+    items.push_back("No");
+    items.push_back("Yes");
+
+    return show_menu("Would you like to load a previous save?", items);
 }
 
 bool wantsToSave(const int key) { return key == SAVE || key == tolower(SAVE); }

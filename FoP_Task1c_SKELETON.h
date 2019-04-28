@@ -18,6 +18,7 @@
 #include "Pill.h"
 #include "Score.h"
 #include "Globals.h"
+#include "Utility.h"
 
 #include "RandomUtils.h"    //for seed, random
 #include "ConsoleUtils.h"	//for clrscr, gotoxy, etc.
@@ -25,10 +26,6 @@
 
 using namespace std;
 
-struct Position
-{
-    int x, y;
-};
 
 void initialiseGame(char grid[][SIZEX], char maze[][SIZEX], player& spot, mouse& mouse, pill& pill, mongoose& mongoose);
 void setSpotInitialCoordinates(player& spot, const char maze[][SIZEX]);

@@ -1,15 +1,20 @@
 #pragma once
 #include "Item.h"
 #include "Player.h"
+#include "RandomUtils.h"
+#include "Mouse.h"
+#include "Utility.h"
 
 const char MONGOOSE('M');
 struct mongoose : item
 {
-	bool show;
+	bool show = false;
+
 	mongoose(int x, int y);
 
-    void update(player player);
+    void walk(const char g[][SIZEX]);
+    void update(const char[][SIZEX], const player& player);
+	bool collide(player& player) const;
 
-	bool mongoose::collide(player& player);
-	void mongoose::walk();
+    virtual void place(char g[][SIZEX]) const override;
 };

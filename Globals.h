@@ -25,3 +25,9 @@ const int         GAMEDELAY(150); // Time to wait between 'frames' in milisecond
 const std::string SCOREFILE("bestscores.txt");
 const std::string SAVEFILEEXTENSION(".save");
 const int         MAXSCORE(10);
+
+
+struct Position
+{
+    int x, y;
+};
