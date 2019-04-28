@@ -21,6 +21,12 @@ bool mouse::collide(const char g[][SIZEX],
     setRandomItemPosition(g, pill);  // Move the pill at the same time
     spot.move(dy, dx);               // Allow the player to teleport into the space
 
+    if(spot.mouseCount >= MAXSCORE)
+    {
+        spot.alive = false;
+        spot.causeOfDeath = "You ate all the mice.";
+    }
+
     // every two mice caught, a power up pill spawns (check for that)
     if (spot.mouseCount % 2 == 0)
     {

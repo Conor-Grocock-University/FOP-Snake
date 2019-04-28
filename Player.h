@@ -16,6 +16,7 @@ struct player: item
     bool inCheatMode,          // Is the player currently in cheat mode
          inInvincibleMode,     // Is the player currently in invincible mode
          alive = true;         // Has the player hit a wall or its own tail
+    std::string causeOfDeath;
 
          player(int x, int y);
     void place(char g[][SIZEX]) const;

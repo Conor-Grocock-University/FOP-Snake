@@ -49,7 +49,7 @@ void setRandomItemPosition(const char grid[][SIZEX], item& item);
 bool validPosition(const char grid[][SIZEX], int x, int y);
 void placeMaze(char grid[][SIZEX], const char maze[][SIZEX]);
 void showScoreboard();
-void showGameOver();
+void showGameOver(const player player);
 void setKeyDirection(const int key, int& dx, int& dy);
 int getKeyPress();
 bool isArrowKey(const int key);
