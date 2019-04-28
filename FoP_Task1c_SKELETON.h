@@ -35,7 +35,7 @@ void updateGame(char       grid[][SIZEX],
     player&    spot,
     mouse&     mouse,
     pill&      pill,
-    mongoose   mongoose,
+    mongoose&   mongoose,
     const int  keyCode,
     string&    mess);
 void updateGameData(const char g[][SIZEX], player& spot, mouse& mouse, pill& pill, mongoose& mongoose, const int key,

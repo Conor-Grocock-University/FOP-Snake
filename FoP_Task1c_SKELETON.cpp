@@ -144,7 +144,7 @@ void updateGame(char       grid[][SIZEX],
                 player&    spot,
                 mouse&     mouse,
                 pill&      pill,
-                mongoose   mongoose,
+                mongoose&   mongoose,
                 const int  keyCode,
                 string&    mess)
 {

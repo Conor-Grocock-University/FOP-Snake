@@ -24,8 +24,8 @@ void player::teleport(const int new_y, const int new_x)
         tails.erase(tails.begin());
     tails.emplace_back(x, y);
 
-    y = new_y; //go in that Y direction
-    x = new_x; //go in that X direction
+   y = new_y; //go in that Y direction
+   x = new_x; //go in that X direction
 }
 
 void player::toggle_invinsibility()

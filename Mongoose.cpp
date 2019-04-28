@@ -17,20 +17,19 @@ void mongoose::place(char g[][SIZEX]) const
 
 void mongoose::walk(const char g[][SIZEX])
 {
-    int new_x = random(2) - 1;
-    int new_y = random(2) - 1;
+    int new_x = random(3) - 2;
+    int new_y = random(3) - 2;
 
     while(!validPosition(g, x + new_x, y + new_y)) {
-        new_x = random(2) - 1;
-        new_y = random(2) - 1;
+        new_x = random(3) - 2;
+        new_y = random(3) - 2;
     }
 
-    x += new_x;
-    y += new_y;
+   move(new_x,new_y);
 }
 
 void mongoose::update(const char g[][SIZEX], const player& player) {
     this->walk(g);
     if (player.mouseCount >= 3)
-        this->show = true;
+        this->show = true;    
 }
